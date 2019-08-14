@@ -1,0 +1,72 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import os
+import sys
+import argparse
+import imp
+import time
+import re
+
+import io
+import webloader as dli
+import matplotlib
+import numpy as np
+from webloader import  loader, utils
+import pickle
+import matplotlib as mpl
+import matplotlib.pylab as plt
+import PIL
+from itertools import islice
+from tarproclib import reader
+
+parser = argparse.ArgumentParser("""
+Dump data from a web dataset.
+""")
+parser.add_argument("-f", "--field", default="ppm;pgm;pbm;jpg;jpeg;png;img;image", nargs="?",
+                    help="field to be selected")
+parser.add_argument("-s", "--skip", type=int, default=0, nargs="?",
+                    help="number of records to skip initially")
+parser.add_argument("-q", "--quick", action="store_true")
+parser.add_argument("--silent", action="store_true")
+parser.add_argument("--verbatim-keys", action="store_true")
+parser.add_argument("input", default="-", nargs="?", help="tar file")
+args = parser.parse_args()
+
+plt.ion()
+
+stream = open(args.input, "rb") if args.input != "-" else sys.stdin.buffer
+source = reader.tariterator(stream)
+
+fields = re.split("[,; ]", args.field)
+
+for sample in islice(source, args.skip, 1000000000):
+    try:
+        if not args.verbatim_keys:
+            sample = {k.lower(): v for k, v in sample.items()}
+        if not args.silent:
+            for k, v in sorted(list(sample.items())):
+                print(f"{k:20s}\t{str(v)[:60]}", file=sys.stderr)
+        if not args.quick:
+            image = None
+            for f in fields:
+                if f in sample:
+                    image = sample[f]
+            if image is None:
+                continue
+            image = PIL.Image.open(io.BytesIO(image))
+            if not args.silent:
+                k = "__image__"
+                print(f"{k:20s}\t{image}", file=sys.stderr)
+            plt.imshow(image)
+            plt.show()
+            plt.waitforbuttonpress()
+        if not args.silent:
+            print(file=sys.stderr)
+    except Exception as e:
+        print(e)
+        time.sleep(1)

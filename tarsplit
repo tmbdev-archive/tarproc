@@ -1,0 +1,100 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import argparse
+import atexit
+import glob
+import imp
+import os
+import shutil
+import sys
+import time
+import re
+from itertools import groupby, islice
+from multiprocessing import Pool
+
+import matplotlib
+import numpy as np
+import simplejson
+from tarproclib import reader, writer, paths
+
+parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser.add_argument("-n", "--num-samples", default=100000, type=int)
+parser.add_argument("-s", "--max-size", default=1e9, type=float)
+parser.add_argument("-v", "--verbose", action="store_true")
+parser.add_argument("-C", "--command", default=None)
+parser.add_argument("--start", default=0, type=int)
+parser.add_argument("input")
+parser.add_argument("output", default="temp")
+args = parser.parse_args()
+
+def dprint(*args, **kw):
+    print(*args, file=sys.stderr, **kw)
+
+def sample_size(sample):
+    total = 0
+    for k, v in sample.items():
+        total += len(k)
+        total += len(v)
+    return total
+
+
+total_count = 0
+total_size = 0
+
+shard = 0
+shard_name = None
+count = 0
+size = 0
+sink = None
+
+def finish_shard():
+    if sink is None: return
+    sink.close()
+    if args.command is not None:
+        basename = os.path.basename(shard_name)
+        base, ext = os.path.splitext(basename)
+        kw = dict(
+            shard=shard_name,
+            abspath=os.path.abspath(shard_name),
+            basename=basename,
+            dirname=os.path.basename(shard_name),
+            base=base,
+            ext=ext)
+        cmd = args.command.format(**kw)
+        status = os.system(cmd)
+        assert status==0, (status, cmd)
+
+if "{" not in args.output:
+    output_pattern = args.output + "-{shard:06d}.tar"
+else:
+    output_pattern = args.output
+
+if args.input == "-":
+    stream = sys.stdin.buffer
+else:
+    stream = open(args.input, "rb")
+
+for sample in reader.tariterator(stream):
+    if args.verbose:
+        dprint(sample.get("__key__"))
+    if sink is None or count > args.num_samples or size > args.max_size:
+        total_count += count
+        total_size += size
+        count = 0
+        size = 0
+        finish_shard()
+        shard_name = output_pattern.format(shard=shard)
+        dprint(f"# writing {shard_name} ({total_count}, {total_size})")
+        sink_stream = open(shard_name, "wb")
+        sink = writer.TarWriter(sink_stream)
+        shard += 1
+    sink.write(sample)
+    count += 1
+    size += sample_size(sample)
+
+finish_shard()

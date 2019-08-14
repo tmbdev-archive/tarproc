@@ -1,0 +1,77 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import argparse
+import atexit
+import glob
+import imp
+import os
+import shutil
+import sys
+import time
+import re
+from itertools import groupby, islice
+from multiprocessing import Pool
+import csv
+import codecs
+
+import matplotlib
+import numpy as np
+import simplejson
+from tarproclib import reader, writer, paths
+
+parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser.add_argument("-f", "--delim", default="")
+parser.add_argument("-k", "--key", default="{record:09d}")
+parser.add_argument("-C", "--dir", default=None)
+parser.add_argument("plan")
+parser.add_argument("output", default="-", nargs="?")
+args = parser.parse_args()
+
+def dprint(*args, **kw):
+    print(*args, file=sys.stderr, **kw)
+
+if args.delim=="":
+    if args.plan.endswith(".csv"):
+        args.delim = ","
+    else:
+        args.delim = "\t"
+
+plan_ = csv.reader(codecs.open(args.plan, "r", encoding="utf-8"), delimiter=args.delim)
+plan = iter(plan_)
+header = next(plan)
+dprint(header)
+for row in plan:
+    assert len(row) == len(header)
+    for h, v in zip(header, row):
+        if h[0]=="@":
+            if args.dir: v = os.path.join(args.dir, v)
+            assert os.path.exists(v), v
+
+if args.output=="-":
+    output = sys.stdout.buffer
+else:
+    output = open(args.output, "wb")
+sink = writer.TarWriter(output)
+
+plan_ = csv.reader(codecs.open(args.plan, "r", encoding="utf-8"), delimiter=args.delim)
+plan = iter(plan_)
+header = next(plan)
+record = 0
+for row in plan:
+    sample = {}
+    for h, v in zip(header, row):
+        if h[0]=="@":
+            if args.dir: v = os.path.join(args.dir, v)
+            sample[h[1:]] = paths.read_binary(v)
+        else:
+            sample[h] = v.encode("utf-8")
+    if "__key__" not in sample:
+        sample["__key__"] = args.key.format(record=record)
+    sink.write(sample)
+    record += 1
+sink.close()
