@@ -110,6 +110,8 @@ Commonly, we might use it with something more complex like this:
     find: write error
 
 
+# Concatenating Tar Files
+
 You can reshard with a combination of `tarcat` and `tarsplit` (here we're using the same tar file as input multiple times, but in practice, you'd of course use separate shards).
 
 
@@ -146,6 +148,40 @@ tarcat -c 'gsutil cat {}' -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz'
 
 
     Keyboard Interrupt
+
+
+# Creating Tar Files from TSV Files
+
+You can create `tar` archives from TSV files. The first line is a header that gives the field names, subsequent lines are data. Headers starting with "@" cause the corresponding field content to be interpreted as a file name that gets incorporated by binary-reading it.
+
+Of course, this too combines with `tarsplit` and other utilities.
+
+
+```sos
+sed 3q testdata/plan.tsv
+```
+
+    @file	a	b	c
+    hello	1	1	1
+    hello	1	1	1
+
+
+
+```sos
+tarcreate -C testdata testdata/plan.tsv | tar tvf - | sed 10q
+```
+
+    ['@file', 'a', 'b', 'c']
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.b
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.c
+    -r--r--r-- bigdata/bigdata   6 2019-08-15 00:01 000000000.file
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.b
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.c
+    -r--r--r-- bigdata/bigdata   6 2019-08-15 00:01 000000001.file
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000002.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000002.b
 
 
 # Sorting
