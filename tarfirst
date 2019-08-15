@@ -24,11 +24,7 @@ parser.add_argument("-v", "--verbose", action="store_true",
                     help="output more information")
 parser.add_argument("-f", "--field", default="img;image;ppm;pgm;pbm;jpeg;jpg;png",
                     help="field to be selected")
-parser.add_argument("-s", "--skip", type=int, default=0, nargs="?",
-                    help="number of records to skip initially")
-parser.add_argument("input",
-                    type=argparse.FileType('rb'), nargs="?",
-                    default=sys.stdin.buffer)
+parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 class Record(object):
@@ -56,19 +52,7 @@ def parse_field_spec(fields):
         fields = fields.split()
     return [field.split(";") for field in fields]
 
-source = reader.tariterator(args.input)
-source = iter(source)
-
-if args.skip > 0:
-    for i, sample in enumerate(source):
-        assert isinstance(sample, dict), sample
-        if args.verbose and i==0:
-            print("#", repr(list(sample.keys())), file=sys.stderr)
-        if args.verbose:
-            print(i, sample.get("__key__"), file=sys.stderr)
-        if i >= args.skip: break
-
-for sample in source:
+for sample in reader.TarIterator(args.input):
     assert isinstance(sample, dict), sample
     if args.verbose:
         print("#", sample.get("__key__"), args.field, sample.keys(), file=sys.stderr)

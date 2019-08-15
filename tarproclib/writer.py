@@ -70,15 +70,15 @@ class TarWriter(object):
                 "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
+            if k == "__key__":
+                continue
             if not self.keep_meta and k[0] == "_":
                 continue
             v = obj[k]
-            if sys.version_info[0] == 2:
-                assert isinstance(v, (str, buffer)),  \
-                    "converter didn't yield a string: %s" % ((k, type(v)),)
-            else:
-                assert isinstance(v, (bytes)),  \
-                    "converter didn't yield bytes: %s" % ((k, type(v)),)
+            if isinstance(v, str):
+                v = v.encode("utf-8")
+            assert isinstance(v, (bytes)),  \
+                "converter didn't yield bytes: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + k)
             ti.size = len(v)

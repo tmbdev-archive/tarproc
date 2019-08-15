@@ -29,9 +29,7 @@ parser.add_argument("-C", "--command", default=None)
 parser.add_argument("-o", "--output", default="temp")
 parser.add_argument("--start", default=0, type=int)
 parser.add_argument("--maxshards", default=1000000000, type=int)
-parser.add_argument("input",
-                    type=argparse.FileType('rb'), nargs="?",
-                    default=sys.stdin.buffer)
+parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 def dprint(*args, **kw):
@@ -78,9 +76,7 @@ if "{" not in args.output:
 else:
     output_pattern = args.output
 
-stream = args.input
-
-for sample in reader.tariterator(stream):
+for sample in reader.TarIterator(args.input):
     if args.verbose:
         dprint(sample.get("__key__"))
     if sink is None or count >= args.num_samples or size >= args.max_size:

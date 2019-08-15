@@ -5,6 +5,7 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
+import math
 import glob
 import imp
 import os
@@ -13,9 +14,10 @@ import sys
 import time
 import re
 import tarfile
+import braceexpand as braceexpandlib
 from itertools import groupby, islice
 
-from . import paths
+from . import paths, gopen
 
 meta_prefix = "__"
 meta_suffix = "__"
@@ -92,3 +94,29 @@ def tariterator(fileobj, keys=paths.base_plus_ext, decoder=None, suffixes=None, 
     if decoder is not None:
         samples = (decoder(sample) for sample in samples)
     return samples
+
+class TarIterator(object):
+    def __init__(self, url, braceexpand=True, **kw):
+        self.start = 0
+        self.end = math.inf
+        if len(url.rsplit("#", 1)) > 1:
+            url, fragment = url.rsplit("#", 1)
+            self.start, self.end = [int(x) for x in (fragment.rsplit(",") * 2)[:2]]
+            self.end += 1
+        if braceexpand:
+            self.urls = list(braceexpandlib.braceexpand(url))
+        else:
+            self.urls = [url]
+        self.kw = kw
+    def __iter__(self):
+        count = 0
+        for url in self.urls:
+            with gopen.gopen(url, "rb") as stream:
+                for sample in tariterator(stream, **self.kw):
+                    if count < self.start: continue
+                    if count >= self.end: break
+                    if "__source__" not in sample:
+                        sample["__source__"] = url
+                    yield sample
+                    count += 1
+            if count >= self.end: break

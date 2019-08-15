@@ -48,14 +48,10 @@ parser.add_argument("-I", "--include", default=None,
                     help="include only files matching this in output")
 parser.add_argument("-s", "--separator", default="",
                     help="separator between key and new file bases")
-parser.add_argument("--count", default="",
-                    help="limit the #samples processed (for testing)")
 parser.add_argument("--interpreter", default="bash",
                     help="interpreter used for script argument")
 parser.add_argument("-o", "--output", default=None)
-parser.add_argument("input",
-                    type=argparse.FileType('rb'), nargs="?",
-                    default=sys.stdin.buffer)
+parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 def dprint(*args, **kw):
@@ -163,17 +159,6 @@ os.mkdir(args.working_dir)
 
 atexit.register(lambda: shutil.rmtree(args.working_dir))
 
-inputs = reader.tariterator(args.input)
-
-if args.count != "":
-    count = eval("("+args.count+")")
-    if isinstance(count, int):
-        inputs = islice(inputs, count)
-    elif isinstance(count, tuple):
-        inputs = islice(inputs, *count)
-    else:
-        raise ValueError(f"{args.count}: bad --count")
-
 sink = None
 
 if args.output is not None:
@@ -200,11 +185,12 @@ def handle_result(new_samples):
             sink.write(s)
 
 if args.parallel==0:
-    for i, sample in enumerate(inputs):
+    for i, sample in enumerate(reader.TarIterator(args.input)):
         assert isinstance(sample, dict)
         new_samples = proc_sample1((i, sample))
         handle_result(new_samples)
 elif args.parallel>0:
     with Pool(processes=args.parallel) as pool:
-        for new_samples in pool.imap_unordered(proc_sample1, enumerate(inputs)):
+        for new_samples in pool.imap_unordered(proc_sample1,
+                enumerate(reader.TarIterator(args.input))):
             handle_result(new_samples)

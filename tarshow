@@ -23,8 +23,7 @@ Dump data from a web dataset.
 """)
 parser.add_argument("-f", "--field", default=None,
                     help="field to be viewed")
-parser.add_argument("-s", "--skip", type=int, default=0, nargs="?",
-                    help="number of records to skip initially")
+parser.add_argument("-c", "--count", type=int, default=10000000000)
 parser.add_argument("--silent", action="store_true")
 parser.add_argument("--verbatim-keys", action="store_true")
 parser.add_argument("input", default="-", nargs="?", help="tar file")
@@ -39,11 +38,8 @@ if args.field is not None:
 else:
     fields = None
 
-stream = open(args.input, "rb") if args.input != "-" else sys.stdin.buffer
-source = reader.tariterator(stream)
-
-
-for sample in islice(source, args.skip, 1000000000):
+for i, sample in enumerate(reader.TarIterator(args.input)):
+    if i >= args.count: break
     try:
         if not args.verbatim_keys:
             sample = {k.lower(): v for k, v in sample.items()}

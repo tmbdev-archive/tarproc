@@ -21,12 +21,10 @@ Dump data from a web dataset.
 """)
 parser.add_argument("-f", "--fields", default="__key__",
                     help="field to be selected")
-parser.add_argument("-s", "--slice", default=None,
-                    help="select range")
+parser.add_argument("-c", "--count", type=int, default=10000000000)
 parser.add_argument("--nokey", action="store_true")
-parser.add_argument("input",
-                    type=argparse.FileType('rb'), nargs="?",
-                    default=sys.stdin.buffer)
+parser.add_argument("--noheader", action="store_true")
+parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 def dprint(*args, **kw):
@@ -48,13 +46,7 @@ def parse_field_spec(fields):
 
 fields = parse_field_spec(args.fields)
 if not args.nokey:
-    fields = ["__key__"] + fields
-
-source = reader.tariterator(args.input)
-source = iter(source)
-if args.slice is not None:
-    s = eval("("+args.slice+",)")
-    source = islice(source, *s)
+    fields = [["__key__"]] + fields
 
 def unicode(s):
     if isinstance(s, str):
@@ -63,7 +55,11 @@ def unicode(s):
         return s.decode("utf-8")
     return str(s)
 
-for sample in source:
+if not args.noheader:
+    print("\t".join([f[0] for f in fields]))
+
+for i, sample in enumerate(reader.TarIterator(args.input)):
+    if i >= args.count: break
     assert isinstance(sample, dict), sample
     result = [unicode(getfirst(sample, k)) for k in fields]
     print("\t".join(result))

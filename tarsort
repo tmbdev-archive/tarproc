@@ -30,9 +30,9 @@ parser.add_argument("-S", "--sorttype", default=None)
 parser.add_argument("-r", "--report", default=0, type=int)
 parser.add_argument("-t", "--tempfile", default="_tarsort-{pid}.db")
 parser.add_argument("--update", action="store_true")
-parser.add_argument("--count", type=int, default=10000000)
 parser.add_argument("--keep", action="store_true")
 parser.add_argument("--commit", default=1000, type=int)
+parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 if args.sorttype is None:
@@ -68,7 +68,7 @@ create table tarsort (
 )
 """)
 
-for i, sample in islice(enumerate(reader.tariterator(sys.stdin.buffer)), 0, args.count):
+for i, sample in enumerate(reader.TarIterator(args.input)):
     if args.report>0 and i%args.report==0:
         dprint(">", i, sample.get("__key__"))
     sortkey = sample.get(args.sortkey, "")
