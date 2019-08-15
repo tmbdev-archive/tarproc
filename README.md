@@ -31,34 +31,45 @@ The `tarshow` utility displays images and data from tar files; without the `-q` 
 
 
 ```sos
-tarshow < testdata/imagenet-000000.tar 2>&1 | sed 10q
+tarshow 'testdata/imagenet-000000.tar#0,3'
 ```
 
     __key__             	10
+    __source__          	testdata/imagenet-000000.tar
     cls                 	b'304'
     png                 	b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02X\x00\x00\x
     wnid                	b'n04380533'
     xml                 	b'None'
     
     __key__             	12
+    __source__          	testdata/imagenet-000000.tar
     cls                 	b'551'
     png                 	b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\xc8\x00\x0
     wnid                	b'n03485407'
+    xml                 	b'None'
+    
+    __key__             	13
+    __source__          	testdata/imagenet-000000.tar
+    cls                 	b'180'
+    png                 	b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x90\x00\x0
+    wnid                	b'n02088632'
+    xml                 	b'None'
+    
 
 
 The `tarfirst` command outputs the first file matching some specification; this is useful for debugging.
 
 
 ```sos
-tarfirst -s 3 -f wnid testdata/imagenet-000000.tar 
+tarfirst -f wnid testdata/imagenet-000000.tar
 ```
 
-    18.wnid
-    n02169497
+    10.wnid
+    n04380533
 
 
 ```sos
-tarfirst < testdata/imagenet-000000.tar > _test.image
+tarfirst testdata/imagenet-000000.tar > _test.image
 file _test.image
 ```
 
@@ -82,14 +93,14 @@ The `tarsplit` utility is useful for creating sharded tar files.
 
 
 ```sos
-tarsplit -n 20 -o _test < testdata/sample.tar
+tarsplit -n 20 -o _test testdata/sample.tar
 ```
 
     # writing _test-000000.tar (0, 0)
-    # writing _test-000001.tar (20, 5880)
-    # writing _test-000002.tar (40, 11233)
-    # writing _test-000003.tar (60, 17020)
-    # writing _test-000004.tar (80, 22757)
+    # writing _test-000001.tar (20, 6460)
+    # writing _test-000002.tar (40, 12393)
+    # writing _test-000003.tar (60, 18760)
+    # writing _test-000004.tar (80, 25077)
 
 
 Commonly, we might use it with something more complex like this:
@@ -100,10 +111,10 @@ Commonly, we might use it with something more complex like this:
 ```
 
     # writing _test-000000.tar (0, 0)
-    # writing _test-000001.tar (803, 100051525)
-    # writing _test-000002.tar (1520, 200122303)
-    # writing _test-000003.tar (2113, 300254739)
-    # writing _test-000004.tar (2778, 400408574)
+    # writing _test-000001.tar (803, 100060358)
+    # writing _test-000002.tar (1520, 200139023)
+    # writing _test-000003.tar (2113, 300277982)
+    # writing _test-000004.tar (2777, 400283020)
     tar: -: Wrote only 6144 of 10240 bytes
     tar: Error is not recoverable: exiting now
     find: ‘standard output’: Broken pipe
@@ -122,23 +133,93 @@ tarcat testdata/sample.tar testdata/sample.tar | tarsplit -n 60
     # got 2 files
     # 0 testdata/sample.tar
     # writing temp-000000.tar (0, 0)
-    # writing temp-000001.tar (60, 17020)
+    # writing temp-000001.tar (60, 17680)
     # 90 testdata/sample.tar
-    # writing temp-000002.tar (120, 34157)
+    # writing temp-000002.tar (120, 35477)
 
 
-The `tarcat` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example:
+The `tarcat` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example. Downloader commands are specified by setting environment variables for each URL schema.
 
 
 ```sos
-tarcat -c 'gsutil cat {}' -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' | tar2tsv -f cls | sed 10q
+export GOPEN_GS="gsutil cat '{}'"
+export GOPEN_HTTP="curl --silent -L '{}'"
+tarcat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
+```
+
+    # got 1 files
+    # 0 gs://lpr-imagenet/imagenet_train-0000.tgz
+    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0000.tgz'
+    __key__	cls
+    n03788365_17158	852
+    n03000247_49831	902
+    n03000247_22907	902
+    n04597913_10741	951
+    n02117135_412	34
+    n03977966_79041	285
+    n04162706_8032	589
+    n03670208_11267	270
+    n02782093_1594	233
+    n02172182_3093	626
+
+
+
+```sos
+tarcat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' | tarshow
 ```
 
     # got 148 files
-    # 0 gs://lpr-imagenet/imagenet_train-0000.tgz
+    # 0 gs://lpr-imagenet/imagenet_train-0046.tgz
+    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0046.tgz'
+    __key__             	n03743016_2069
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
+    cls                 	b'717'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
+    json                	b'{"cls": 717, "cname": "megalith, megalithic structure"}'
+    
+    __key__             	n03691459_42008
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
+    cls                 	b'508'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
+    json                	b'{"cls": 508, "cname": "loudspeaker, speaker, speaker unit,
+    
+    __key__             	n02814533_22500
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
+    cls                 	b'266'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
+    json                	b'{"annotation": {"folder": "n02814533", "filename": "n02814
+    
 
 
-    Keyboard Interrupt
+
+```sos
+tarshow 'gs://lpr-imagenet/imagenet_train-{0000..0099}.tgz#0,3'
+```
+
+    __key__             	n03788365_17158
+    __source__          	gs://lpr-imagenet/imagenet_train-0000.tgz
+    cls                 	b'852'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x0e\xd8\x0e\x
+    json                	b'{"annotation": {"folder": "n03788365", "filename": "n03788
+    
+    __key__             	n03000247_49831
+    __source__          	gs://lpr-imagenet/imagenet_train-0000.tgz
+    cls                 	b'902'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00\xf0\x00\x
+    json                	b'{"cls": 902, "cname": "chain mail, ring mail, mail, chain 
+    
+    __key__             	n03000247_22907
+    __source__          	gs://lpr-imagenet/imagenet_train-0000.tgz
+    cls                 	b'902'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
+    json                	b'{"annotation": {"folder": "n03000247", "filename": "n03000
+    
+    __key__             	n04597913_10741
+    __source__          	gs://lpr-imagenet/imagenet_train-0000.tgz
+    cls                 	b'951'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00\xfa\x00\x
+    json                	b'{"annotation": {"folder": "n04597913", "filename": "n04597
+    
 
 
 # Creating Tar Files from TSV Files
@@ -159,21 +240,31 @@ sed 3q testdata/plan.tsv
 
 
 ```sos
-tarcreate -C testdata testdata/plan.tsv | tar tvf - | sed 10q
+tarcreate -C testdata testdata/plan.tsv | tarshow -c 3
 ```
 
     ['@file', 'a', 'b', 'c']
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.b
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.c
-    -r--r--r-- bigdata/bigdata   6 2019-08-15 09:04 000000000.file
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.b
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.c
-    -r--r--r-- bigdata/bigdata   6 2019-08-15 09:04 000000001.file
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000002.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000002.b
-    tar: write error
+    __key__             	000000000
+    __source__          	-
+    a                   	b'1'
+    b                   	b'1'
+    c                   	b'1'
+    file                	b'world\n'
+    
+    __key__             	000000001
+    __source__          	-
+    a                   	b'1'
+    b                   	b'1'
+    c                   	b'1'
+    file                	b'world\n'
+    
+    __key__             	000000002
+    __source__          	-
+    a                   	b'1'
+    b                   	b'1'
+    c                   	b'1'
+    file                	b'world\n'
+    
 
 
 # Sorting
@@ -184,27 +275,29 @@ You can use any content for sorting. Here, we sort on the content of the `cls` f
 
 
 ```sos
-tarsort --sortkey cls --sorttype int --update < testdata/imagenet-000000.tar > _sorted.tar
+tarsort --sortkey cls --sorttype int --update testdata/imagenet-000000.tar > _sorted.tar
 ```
 
 
 ```sos
-tar2tsv -s 5 -f "cls wnid" testdata/imagenet-000000.tar
+tar2tsv -c 5 -f "cls wnid" testdata/imagenet-000000.tar
 echo
-tar2tsv -s 5 -f "cls wnid" _sorted.tar
+tar2tsv -c 5 -f "cls wnid" _sorted.tar
 ```
 
+    __key__	cls	wnid
     10	304	n04380533
     12	551	n03485407
     13	180	n02088632
     15	165	n02410509
     18	625	n02169497
     
-    27	897	n03220513
-    63	439	n02051845
-    59	75	n02500267
-    69	55	n02123159
-    43	966	n03188531
+    __key__	cls	wnid
+    77	14	n02077923
+    75	25	n02092339
+    46	27	n02096437
+    80	53	n02356798
+    29	54	n02488702
 
 
 You can also use `tarsort` for shuffling records.
@@ -212,9 +305,10 @@ You can also use `tarsort` for shuffling records.
 
 ```sos
 tarsort --sorttype shuffle < testdata/imagenet-000000.tar > _sorted.tar
-tar2tsv -s 5 -f "cls wnid" _sorted.tar
+tar2tsv -c 5 -f "cls wnid" _sorted.tar
 ```
 
+    __key__	cls	wnid
     27	897	n03220513
     63	439	n02051845
     59	75	n02500267
@@ -232,9 +326,9 @@ time tarproc -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar 
 ```
 
     
-    real	0m3.987s
-    user	0m3.673s
-    sys	0m0.307s
+    real	0m3.961s
+    user	0m3.623s
+    sys	0m0.330s
 
 
 You can even parallelize this (somewhat analogous to `xargs`):
@@ -245,12 +339,35 @@ time tarproc -p 8 -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000
 ```
 
     
-    real	0m0.801s
-    user	0m4.208s
-    sys	0m0.359s
+    real	0m0.795s
+    user	0m4.139s
+    sys	0m0.369s
 
+
+# Python Interface
 
 
 ```sos
+from tarproclib import reader, gopen
+from itertools import islice
 
+gopen.handlers["gs"] = "gsutil cat '{}'"
+
+for sample in islice(reader.TarIterator("gs://lpr-imagenet/imagenet_train-0000.tgz"), 0, 10):
+    print(sample.keys())
 ```
+
+    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0000.tgz'
+
+
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json'])
+
