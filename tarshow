@@ -15,31 +15,33 @@ import io
 import matplotlib
 import numpy as np
 import pickle
-import matplotlib as mpl
-import matplotlib.pylab as plt
-import PIL
 from itertools import islice
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("""
 Dump data from a web dataset.
 """)
-parser.add_argument("-f", "--field", default="ppm;pgm;pbm;jpg;jpeg;png;img;image", nargs="?",
-                    help="field to be selected")
+parser.add_argument("-f", "--field", default=None,
+                    help="field to be viewed")
 parser.add_argument("-s", "--skip", type=int, default=0, nargs="?",
                     help="number of records to skip initially")
-parser.add_argument("-q", "--quick", action="store_true")
 parser.add_argument("--silent", action="store_true")
 parser.add_argument("--verbatim-keys", action="store_true")
 parser.add_argument("input", default="-", nargs="?", help="tar file")
 args = parser.parse_args()
 
-plt.ion()
+if args.field is not None:
+    import matplotlib as mpl
+    import matplotlib.pylab as plt
+    import PIL
+    plt.ion()
+    fields = re.split("[,; ]", args.field)
+else:
+    fields = None
 
 stream = open(args.input, "rb") if args.input != "-" else sys.stdin.buffer
 source = reader.tariterator(stream)
 
-fields = re.split("[,; ]", args.field)
 
 for sample in islice(source, args.skip, 1000000000):
     try:
@@ -48,7 +50,7 @@ for sample in islice(source, args.skip, 1000000000):
         if not args.silent:
             for k, v in sorted(list(sample.items())):
                 print(f"{k:20s}\t{str(v)[:60]}", file=sys.stderr)
-        if not args.quick:
+        if fields is not None:
             image = None
             for f in fields:
                 if f in sample:

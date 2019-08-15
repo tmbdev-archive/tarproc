@@ -31,7 +31,7 @@ The `tarshow` utility displays images and data from tar files; without the `-q` 
 
 
 ```sos
-tarshow -q < testdata/imagenet-000000.tar 2>&1 | sed 10q
+tarshow < testdata/imagenet-000000.tar 2>&1 | sed 10q
 ```
 
     __key__             	10
@@ -86,10 +86,10 @@ tarsplit -n 20 -o _test < testdata/sample.tar
 ```
 
     # writing _test-000000.tar (0, 0)
-    # writing _test-000001.tar (21, 6151)
-    # writing _test-000002.tar (42, 11857)
-    # writing _test-000003.tar (63, 17955)
-    # writing _test-000004.tar (84, 23947)
+    # writing _test-000001.tar (20, 5880)
+    # writing _test-000002.tar (40, 11233)
+    # writing _test-000003.tar (60, 17020)
+    # writing _test-000004.tar (80, 22757)
 
 
 Commonly, we might use it with something more complex like this:
@@ -104,7 +104,7 @@ Commonly, we might use it with something more complex like this:
     # writing _test-000002.tar (1520, 200122303)
     # writing _test-000003.tar (2113, 300254739)
     # writing _test-000004.tar (2778, 400408574)
-    tar: -: Wrote only 8192 of 10240 bytes
+    tar: -: Wrote only 6144 of 10240 bytes
     tar: Error is not recoverable: exiting now
     find: ‘standard output’: Broken pipe
     find: write error
@@ -119,6 +119,7 @@ You can reshard with a combination of `tarcat` and `tarsplit` (here we're using 
 tarcat testdata/sample.tar testdata/sample.tar | tarsplit -n 60
 ```
 
+    # got 2 files
     # 0 testdata/sample.tar
     # writing temp-000000.tar (0, 0)
     # writing temp-000001.tar (60, 17020)
@@ -135,16 +136,6 @@ tarcat -c 'gsutil cat {}' -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz'
 
     # got 148 files
     # 0 gs://lpr-imagenet/imagenet_train-0000.tgz
-    n03788365_17158	852
-    n03000247_49831	902
-    n03000247_22907	902
-    n04597913_10741	951
-    n02117135_412	34
-    n03977966_79041	285
-    n04162706_8032	589
-    n03670208_11267	270
-    n02782093_1594	233
-    n02172182_3093	626
 
 
     Keyboard Interrupt
@@ -172,16 +163,17 @@ tarcreate -C testdata testdata/plan.tsv | tar tvf - | sed 10q
 ```
 
     ['@file', 'a', 'b', 'c']
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.b
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000000.c
-    -r--r--r-- bigdata/bigdata   6 2019-08-15 00:01 000000000.file
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.b
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000001.c
-    -r--r--r-- bigdata/bigdata   6 2019-08-15 00:01 000000001.file
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000002.a
-    -r--r--r-- bigdata/bigdata   1 2019-08-15 00:01 000000002.b
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.b
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000000.c
+    -r--r--r-- bigdata/bigdata   6 2019-08-15 09:04 000000000.file
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.b
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000001.c
+    -r--r--r-- bigdata/bigdata   6 2019-08-15 09:04 000000001.file
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000002.a
+    -r--r--r-- bigdata/bigdata   1 2019-08-15 09:04 000000002.b
+    tar: write error
 
 
 # Sorting
@@ -197,9 +189,9 @@ tarsort --sortkey cls --sorttype int --update < testdata/imagenet-000000.tar > _
 
 
 ```sos
-tarcat -s 5 -f "cls wnid" testdata/imagenet-000000.tar
+tar2tsv -s 5 -f "cls wnid" testdata/imagenet-000000.tar
 echo
-tarcat -s 5 -f "cls wnid" _sorted.tar
+tar2tsv -s 5 -f "cls wnid" _sorted.tar
 ```
 
     10	304	n04380533
@@ -208,11 +200,11 @@ tarcat -s 5 -f "cls wnid" _sorted.tar
     15	165	n02410509
     18	625	n02169497
     
-    77	14	n02077923
-    75	25	n02092339
-    46	27	n02096437
-    80	53	n02356798
-    29	54	n02488702
+    27	897	n03220513
+    63	439	n02051845
+    59	75	n02500267
+    69	55	n02123159
+    43	966	n03188531
 
 
 You can also use `tarsort` for shuffling records.
@@ -220,7 +212,7 @@ You can also use `tarsort` for shuffling records.
 
 ```sos
 tarsort --sorttype shuffle < testdata/imagenet-000000.tar > _sorted.tar
-tarcat -s 5 -f "cls wnid" _sorted.tar
+tar2tsv -s 5 -f "cls wnid" _sorted.tar
 ```
 
     27	897	n03220513
@@ -240,9 +232,9 @@ time tarproc -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar 
 ```
 
     
-    real	0m3.996s
-    user	0m3.702s
-    sys	0m0.286s
+    real	0m3.987s
+    user	0m3.673s
+    sys	0m0.307s
 
 
 You can even parallelize this (somewhat analogous to `xargs`):
@@ -253,9 +245,9 @@ time tarproc -p 8 -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000
 ```
 
     
-    real	0m0.795s
-    user	0m4.140s
-    sys	0m0.390s
+    real	0m0.801s
+    user	0m4.208s
+    sys	0m0.359s
 
 
 
