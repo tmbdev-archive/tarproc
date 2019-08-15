@@ -8,7 +8,6 @@
 import argparse
 import atexit
 import glob
-import imp
 import os
 import shutil
 import sys

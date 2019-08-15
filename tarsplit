@@ -8,7 +8,6 @@
 import argparse
 import atexit
 import glob
-import imp
 import os
 import shutil
 import sys
@@ -27,9 +26,12 @@ parser.add_argument("-n", "--num-samples", default=100000, type=int)
 parser.add_argument("-s", "--max-size", default=1e9, type=float)
 parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-C", "--command", default=None)
+parser.add_argument("-o", "--output", default="temp")
 parser.add_argument("--start", default=0, type=int)
-parser.add_argument("input")
-parser.add_argument("output", default="temp")
+parser.add_argument("--maxshards", default=1000000000, type=int)
+parser.add_argument("input",
+                    type=argparse.FileType('rb'), nargs="?",
+                    default=sys.stdin.buffer)
 args = parser.parse_args()
 
 def dprint(*args, **kw):
@@ -53,8 +55,10 @@ size = 0
 sink = None
 
 def finish_shard():
+    global sink
     if sink is None: return
     sink.close()
+    sink = None
     if args.command is not None:
         basename = os.path.basename(shard_name)
         base, ext = os.path.splitext(basename)
@@ -74,20 +78,19 @@ if "{" not in args.output:
 else:
     output_pattern = args.output
 
-if args.input == "-":
-    stream = sys.stdin.buffer
-else:
-    stream = open(args.input, "rb")
+stream = args.input
 
 for sample in reader.tariterator(stream):
     if args.verbose:
         dprint(sample.get("__key__"))
-    if sink is None or count > args.num_samples or size > args.max_size:
+    if sink is None or count >= args.num_samples or size >= args.max_size:
         total_count += count
         total_size += size
         count = 0
         size = 0
         finish_shard()
+        if shard >= args.maxshards:
+            break
         shard_name = output_pattern.format(shard=shard)
         dprint(f"# writing {shard_name} ({total_count}, {total_size})")
         sink_stream = open(shard_name, "wb")

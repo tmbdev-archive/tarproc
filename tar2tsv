@@ -1,0 +1,69 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import os
+import sys
+import argparse
+import time
+from itertools import islice
+
+import matplotlib
+import numpy as np
+import pickle
+from tarproclib import reader
+
+parser = argparse.ArgumentParser("""
+Dump data from a web dataset.
+""")
+parser.add_argument("-f", "--fields", default="__key__",
+                    help="field to be selected")
+parser.add_argument("-s", "--slice", default=None,
+                    help="select range")
+parser.add_argument("--nokey", action="store_true")
+parser.add_argument("input",
+                    type=argparse.FileType('rb'), nargs="?",
+                    default=sys.stdin.buffer)
+args = parser.parse_args()
+
+def dprint(*args, **kw):
+    print(*args, file=sys.stderr, **kw)
+
+def getfirst(a, keys, default=None):
+    if isinstance(keys, str):
+        keys = keys.split(";")
+    for k in keys:
+        result = a.get(k)
+        if result is not None:
+            return result
+    return default
+
+def parse_field_spec(fields):
+    if isinstance(fields, str):
+        fields = fields.split()
+    return [field.split(";") for field in fields]
+
+fields = parse_field_spec(args.fields)
+if not args.nokey:
+    fields = ["__key__"] + fields
+
+source = reader.tariterator(args.input)
+source = iter(source)
+if args.slice is not None:
+    s = eval("("+args.slice+",)")
+    source = islice(source, *s)
+
+def unicode(s):
+    if isinstance(s, str):
+        return s
+    if isinstance(s, bytes):
+        return s.decode("utf-8")
+    return str(s)
+
+for sample in source:
+    assert isinstance(sample, dict), sample
+    result = [unicode(getfirst(sample, k)) for k in fields]
+    print("\t".join(result))

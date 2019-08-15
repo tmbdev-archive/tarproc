@@ -8,7 +8,6 @@
 import argparse
 import atexit
 import glob
-import imp
 import os
 import shutil
 import sys
@@ -27,6 +26,7 @@ from tarproclib import reader, writer, paths
 parser = argparse.ArgumentParser("Run a command line tool over all samples.")
 parser.add_argument("-k", "--key", default="__key__")
 parser.add_argument("-s", "--sortkey", default="__key__")
+parser.add_argument("-S", "--sorttype", default=None)
 parser.add_argument("-r", "--report", default=0, type=int)
 parser.add_argument("-t", "--tempfile", default="_tarsort-{pid}.db")
 parser.add_argument("--update", action="store_true")
@@ -35,24 +35,44 @@ parser.add_argument("--keep", action="store_true")
 parser.add_argument("--commit", default=1000, type=int)
 args = parser.parse_args()
 
+if args.sorttype is None:
+    sorttype = lambda x: x
+    dbtype = "text"
+elif args.sorttype == "int":
+    sorttype = int
+    dbtype = "integer"
+elif args.sorttype == "float":
+    sorttype = float
+    dbtype = "real"
+elif args.sorttype == "shuffle":
+    def hash(s):
+        import hashlib
+        if isinstance(s, str): s = s.encode("utf-8")
+        return hashlib.md5(s).hexdigest()
+    sorttype = hash
+    dbtype = "text"
+else:
+    sys.exit(f"{args.sorttype}: unknown sort type")
+
+
 def dprint(*args, **kw): print(*args, file=sys.stderr, **kw)
 
 tempfile = args.tempfile.format(pid=os.getpid())
 assert not os.path.exists(tempfile), tempfile
 db = sqlite3.connect(tempfile)
-db.execute("""
+db.execute(f"""
 create table tarsort (
-    sortkey text not null primary key,
+    sortkey {dbtype} not null primary key,
     key text not null,
     sample blob
 )
 """)
 
-
 for i, sample in islice(enumerate(reader.tariterator(sys.stdin.buffer)), 0, args.count):
     if args.report>0 and i%args.report==0:
         dprint(">", i, sample.get("__key__"))
     sortkey = sample.get(args.sortkey, "")
+    sortkey = sorttype(sortkey)
     key = sample.get(args.key, "__{}__".format(i))
     cmd = "insert" if not args.update else "insert or replace"
     db.execute(f"{cmd} into tarsort values (?,?,?)",

@@ -8,15 +8,12 @@
 import os
 import sys
 import argparse
-import imp
 import time
 import re
 
 import io
-import webloader as dli
 import matplotlib
 import numpy as np
-from webloader import  loader, utils
 import pickle
 import matplotlib as mpl
 import matplotlib.pylab as plt
