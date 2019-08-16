@@ -25,7 +25,7 @@ prereqs = """
 """.split()
 
 setup(
-    name='tarproc',
+    name='tarproclib',
     version='v0.0',
     author="Thomas Breuel",
     description="Big data data processing for tar archive.",
