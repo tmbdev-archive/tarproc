@@ -14,7 +14,7 @@ import sys
 import time
 import re
 from itertools import groupby, islice
-from multiprocessing import Pool
+import subprocess
 
 import matplotlib
 import numpy as np
@@ -55,6 +55,8 @@ sink = None
 def finish_shard():
     global sink
     if sink is None: return
+    if hasattr(sink, "process"):
+        sink.process.wait(timeout=60.0)
     sink.close()
     sink = None
     if args.command is not None:
@@ -89,7 +91,13 @@ for sample in reader.TarIterator(args.input):
             break
         shard_name = output_pattern.format(shard=shard)
         dprint(f"# writing {shard_name} ({total_count}, {total_size})")
-        sink_stream = open(shard_name, "wb")
+        if shard_name[0]=="|":
+            process = subprocess.Popen(shard_name[1:], stdin=subprocess.PIPE, shell=True)
+            stream = process.stdin
+            stream.process = process
+            sink_stream = stream
+        else:
+            sink_stream = open(shard_name, "wb")
         sink = writer.TarWriter(sink_stream)
         shard += 1
     sink.write(sample)
