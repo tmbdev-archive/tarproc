@@ -16,7 +16,7 @@ if sys.version_info < (3, 6):
 
 scripts="""
 tar2tsv tarcat tarcreate tarfirst
-tarproc tarshow tarsort tarsplit 
+tarproc tarshow tarsort tarsplit tarpcat
 """.split()
 
 prereqs = """
