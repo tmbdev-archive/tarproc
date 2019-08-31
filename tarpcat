@@ -50,7 +50,7 @@ def reader_proc(file_queue, sample_queue):
         pass
 
 if args.filelist is not None:
-    filelist = read_filelist(args.filelist)
+    filelist = list(read_filelist(args.filelist))
 elif args.braceexpand:
     assert len(args.input) == 1, args.input
     filelist = list(braceexpand.braceexpand(args.input[0]))
@@ -108,12 +108,13 @@ def parallel_source():
 
     for job in jobs:
         job.start()
-        dprint(job)
+
+    dprint(f"# started {len(jobs)} jobs")
 
     try:
         while len(jobs) > 0:
             try:
-                sample = sample_queue.get(timeout=0.5)
+                sample = sample_queue.get(timeout=5.0)
                 yield sample
             except mpq.Empty:
                 dprint("timeout")
