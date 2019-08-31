@@ -37,7 +37,7 @@ def read_filelist():
             yield line.strip()
 
 if args.filelist is not None:
-    filelist = read_filelist()
+    filelist = list(read_filelist())
 elif args.braceexpand:
     assert len(args.input) == 1, args.input
     filelist = list(braceexpand.braceexpand(args.input[0]))
