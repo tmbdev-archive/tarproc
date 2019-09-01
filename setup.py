@@ -15,7 +15,7 @@ if sys.version_info < (3, 6):
     sys.exit("Python versions less than 3.6 are not supported")
 
 scripts="""
-tar2tsv tarcat tarcreate tarfirst
+tar2tsv tarscat tarcreate tarfirst
 tarproc tarshow tarsort tarsplit tarpcat
 """.split()
 
