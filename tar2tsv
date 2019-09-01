@@ -17,10 +17,10 @@ import pickle
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("""
-Dump data from a web dataset.
+Extract textual information from tar training files.
 """)
-parser.add_argument("-f", "--fields", default="__key__",
-                    help="field to be selected")
+parser.add_argument("-f", "--fields", default="",
+                    help="fields")
 parser.add_argument("-c", "--count", type=int, default=10000000000)
 parser.add_argument("--nokey", action="store_true")
 parser.add_argument("--noheader", action="store_true")

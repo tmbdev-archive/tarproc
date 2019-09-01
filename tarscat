@@ -41,18 +41,21 @@ if args.filelist is not None:
 elif args.braceexpand:
     assert len(args.input) == 1, args.input
     filelist = list(braceexpand.braceexpand(args.input[0]))
-else:
+elif len(args.input) > 0:
     filelist = args.input
+else:
+    filelist = ["-"]
 
 
-dprint(f"# got {len(filelist)} files")
+if filelist != ["-"]:
+    dprint(f"# got {len(filelist)} files")
 
 n = 0
 sink = writer.TarWriter(sys.stdout.buffer, keep_meta=True)
 if args.shuffle:
     random.shuffle(filelist)
 for fname in filelist:
-    dprint(f"# {n} {fname}")
+    if fname != "-": dprint(f"# {n} {fname}")
     for sample in reader.TarIterator(fname, braceexpand=False):
         if "__source__" not in sample:
             sample["__source__"] = fname
