@@ -10,6 +10,7 @@ import sys
 import argparse
 import time
 import re
+import select
 
 import io
 import matplotlib
@@ -18,12 +19,23 @@ import pickle
 from itertools import islice
 from tarproclib import reader
 
+def input_with_timeout(prompt="", timeout=1e9):
+    print(prompt, flush=True, end="")
+    ready, _, _ = select.select([sys.stdin], [],[], timeout)
+    if ready:
+        return sys.stdin.readline().rstrip('\n') # expect stdin to be line-buffered
+    else:
+        return None
+
 parser = argparse.ArgumentParser("""
 Dump data from a web dataset.
 """)
 parser.add_argument("-f", "--field", default=None,
                     help="field to be viewed")
 parser.add_argument("-c", "--count", type=int, default=10000000000)
+parser.add_argument("-N", "--normalize", action="store_true")
+parser.add_argument("-C", "--cmap", default="gray")
+parser.add_argument("--delay", type=float, default=1e9)
 parser.add_argument("--silent", action="store_true")
 parser.add_argument("--verbatim-keys", action="store_true")
 parser.add_argument("input", default="-", nargs="?", help="tar file")
@@ -34,7 +46,7 @@ if args.field is not None:
     import matplotlib.pylab as plt
     import PIL
     plt.ion()
-    fields = re.split("[,; ]", args.field)
+    fields = [re.split("[,;]", f) for f in args.field.split()]
 else:
     fields = None
 
@@ -47,21 +59,36 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
             for k, v in sorted(list(sample.items())):
                 print(f"{k:20s}\t{str(v)[:60]}", file=sys.stderr)
         if fields is not None:
-            image = None
-            for f in fields:
-                if f in sample:
-                    image = sample[f]
-            if image is None:
-                continue
-            image = PIL.Image.open(io.BytesIO(image))
-            if not args.silent:
-                k = "__image__"
-                print(f"{k:20s}\t{image}", file=sys.stderr)
-            plt.imshow(image)
+            plt.clf()
+            for i, field in enumerate(fields):
+                image = None
+                for f in field:
+                    if f in sample:
+                        image = sample[f]
+                if image is None:
+                    continue
+                image = PIL.Image.open(io.BytesIO(image))
+                if not args.silent:
+                    k = "__image__"
+                    print(f"{k:20s}\t{image}", file=sys.stderr)
+                if len(fields) > 1:
+                    plt.subplot(1, len(fields), i+1)
+                if args.normalize:
+                    image = np.asarray(image)
+                    image = image.astype(float)
+                    image -= np.amin(image)
+                    image /= np.amax(image)
+                if image.ndim == 2:
+                    cmap = eval(f"plt.cm.{args.cmap}")
+                    plt.imshow(image, cmap)
+                else:
+                    plt.imshow(image)
             plt.show()
-            plt.waitforbuttonpress()
+            plt.waitforbuttonpress(timeout=0.001)
+            #plt.waitforbuttonpress(timeout=args.delay)
         if not args.silent:
             print(file=sys.stderr)
+        input_with_timeout(timeout=args.delay)
     except Exception as e:
         print(e)
         time.sleep(1)
