@@ -55,6 +55,13 @@ tarshow 'testdata/imagenet-000000.tar#0,3'
     wnid                	b'n02088632'
     xml                 	b'None'
     
+    __key__             	15
+    __source__          	testdata/imagenet-000000.tar
+    cls                 	b'165'
+    png                 	b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\xf4\x00\x0
+    wnid                	b'n02410509'
+    xml                 	b'<annotation>\n\t<folder>n02410509</folder>\n\t<filename>n0
+    
 
 
 The `tarfirst` command outputs the first file matching some specification; this is useful for debugging.
@@ -117,8 +124,9 @@ Commonly, we might use it with something more complex like this:
     # writing _test-000004.tar (2777, 400283020)
     tar: -: Wrote only 6144 of 10240 bytes
     tar: Error is not recoverable: exiting now
-    find: ‘standard output’: Broken pipe
-    find: write error
+
+
+    Keyboard Interrupt
 
 
 # Concatenating Tar Files
@@ -127,29 +135,28 @@ You can reshard with a combination of `tarcat` and `tarsplit` (here we're using 
 
 
 ```sos
-tarcat testdata/sample.tar testdata/sample.tar | tarsplit -n 60
+tarscat testdata/sample.tar testdata/sample.tar | tarsplit -n 60
 ```
 
     # got 2 files
     # 0 testdata/sample.tar
     # writing temp-000000.tar (0, 0)
-    # writing temp-000001.tar (60, 17680)
+    # writing temp-000001.tar (60, 18760)
     # 90 testdata/sample.tar
-    # writing temp-000002.tar (120, 35477)
+    # writing temp-000002.tar (120, 37637)
 
 
-The `tarcat` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example. Downloader commands are specified by setting environment variables for each URL schema.
+The `tarscat` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example. Downloader commands are specified by setting environment variables for each URL schema.
 
 
 ```sos
 export GOPEN_GS="gsutil cat '{}'"
 export GOPEN_HTTP="curl --silent -L '{}'"
-tarcat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
+tarscat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 ```
 
     # got 1 files
     # 0 gs://lpr-imagenet/imagenet_train-0000.tgz
-    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0000.tgz'
     __key__	cls
     n03788365_17158	852
     n03000247_49831	902
@@ -165,29 +172,28 @@ tarcat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 
 
 ```sos
-tarcat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' | tarshow
+tarscat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' | tarshow
 ```
 
     # got 148 files
-    # 0 gs://lpr-imagenet/imagenet_train-0046.tgz
-    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0046.tgz'
-    __key__             	n03743016_2069
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
-    cls                 	b'717'
+    # 0 gs://lpr-imagenet/imagenet_train-0058.tgz
+    __key__             	n02105505_348
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
+    cls                 	b'97'
     jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
-    json                	b'{"cls": 717, "cname": "megalith, megalithic structure"}'
+    json                	b'{"annotation": {"folder": "n02105505", "filename": "n02105
     
-    __key__             	n03691459_42008
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
-    cls                 	b'508'
+    __key__             	n02105641_8144
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
+    cls                 	b'29'
     jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
-    json                	b'{"cls": 508, "cname": "loudspeaker, speaker, speaker unit,
+    json                	b'{"cls": 29, "cname": "Old English sheepdog, bobtail"}'
     
-    __key__             	n02814533_22500
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0046.tgz'
-    cls                 	b'266'
-    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
-    json                	b'{"annotation": {"folder": "n02814533", "filename": "n02814
+    __key__             	n04273569_3412
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
+    cls                 	b'237'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00d\x00d\x00
+    json                	b'{"cls": 237, "cname": "speedboat"}'
     
 
 
@@ -326,9 +332,9 @@ time tarproc -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar 
 ```
 
     
-    real	0m3.961s
-    user	0m3.623s
-    sys	0m0.330s
+    real	0m3.971s
+    user	0m3.637s
+    sys	0m0.320s
 
 
 You can even parallelize this (somewhat analogous to `xargs`):
@@ -339,9 +345,9 @@ time tarproc -p 8 -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000
 ```
 
     
-    real	0m0.795s
-    user	0m4.139s
-    sys	0m0.369s
+    real	0m0.900s
+    user	0m4.259s
+    sys	0m0.366s
 
 
 # Python Interface
@@ -357,17 +363,19 @@ for sample in islice(reader.TarIterator("gs://lpr-imagenet/imagenet_train-0000.t
     print(sample.keys())
 ```
 
-    # gsutil cat 'gs://lpr-imagenet/imagenet_train-0000.tgz'
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
+    dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
 
 
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
-    dict_keys(['__key__', 'cls', 'jpg', 'json'])
 
+```sos
+
+```
