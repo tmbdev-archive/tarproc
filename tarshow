@@ -73,8 +73,8 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
                     print(f"{k:20s}\t{image}", file=sys.stderr)
                 if len(fields) > 1:
                     plt.subplot(1, len(fields), i+1)
+                image = np.asarray(image)
                 if args.normalize:
-                    image = np.asarray(image)
                     image = image.astype(float)
                     image -= np.amin(image)
                     image /= np.amax(image)
