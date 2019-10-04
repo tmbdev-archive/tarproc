@@ -27,11 +27,11 @@ tar tf testdata/imagenet-000000.tar | sed 5q
     tar: write error
 
 
-The `tarshow` utility displays images and data from tar files; without the `-q` option, it will actually pop up an image window, but with `-q` it will simply display the records together.
+The `tarshow` utility displays images and data from tar files.
 
 
 ```sos
-tarshow 'testdata/imagenet-000000.tar#0,3'
+tarshow -d 0 'testdata/imagenet-000000.tar#0,3'
 ```
 
     __key__             	10
@@ -122,7 +122,7 @@ Commonly, we might use it with something more complex like this:
     # writing _test-000002.tar (1520, 200139023)
     # writing _test-000003.tar (2113, 300277982)
     # writing _test-000004.tar (2777, 400283020)
-    tar: -: Wrote only 6144 of 10240 bytes
+    tar: -: Wrote only 4096 of 10240 bytes
     tar: Error is not recoverable: exiting now
 
 
@@ -152,6 +152,10 @@ The `tarscat` utility also lets you specify a downloader command (for accessing 
 ```sos
 export GOPEN_GS="gsutil cat '{}'"
 export GOPEN_HTTP="curl --silent -L '{}'"
+```
+
+
+```sos
 tarscat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 ```
 
@@ -172,34 +176,41 @@ tarscat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 
 
 ```sos
-tarscat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' | tarshow
+tarscat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' > _temp.tar
 ```
 
     # got 148 files
-    # 0 gs://lpr-imagenet/imagenet_train-0058.tgz
-    __key__             	n02105505_348
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
-    cls                 	b'97'
+    # 0 gs://lpr-imagenet/imagenet_train-0043.tgz
+
+
+
+```sos
+tarshow -d 0 _temp.tar
+```
+
+    __key__             	n07753113_21272
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0043.tgz'
+    cls                 	b'321'
     jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
-    json                	b'{"annotation": {"folder": "n02105505", "filename": "n02105
+    json                	b'{"cls": 321, "cname": "fig"}'
     
-    __key__             	n02105641_8144
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
-    cls                 	b'29'
+    __key__             	n02408429_6603
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0043.tgz'
+    cls                 	b'162'
     jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
-    json                	b'{"cls": 29, "cname": "Old English sheepdog, bobtail"}'
+    json                	b'{"cls": 162, "cname": "water buffalo, water ox, Asiatic bu
     
-    __key__             	n04273569_3412
-    __source__          	b'gs://lpr-imagenet/imagenet_train-0058.tgz'
-    cls                 	b'237'
-    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00d\x00d\x00
-    json                	b'{"cls": 237, "cname": "speedboat"}'
+    __key__             	n03485794_6421
+    __source__          	b'gs://lpr-imagenet/imagenet_train-0043.tgz'
+    cls                 	b'750'
+    jpg                 	b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00
+    json                	b'{"cls": 750, "cname": "handkerchief, hankie, hanky, hankey
     
 
 
 
 ```sos
-tarshow 'gs://lpr-imagenet/imagenet_train-{0000..0099}.tgz#0,3'
+tarshow -d 0 'gs://lpr-imagenet/imagenet_train-{0000..0099}.tgz#0,3'
 ```
 
     __key__             	n03788365_17158
@@ -239,9 +250,9 @@ Of course, this too combines with `tarsplit` and other utilities.
 sed 3q testdata/plan.tsv
 ```
 
-    @file	a	b	c
-    hello	1	1	1
-    hello	1	1	1
+    __key__	@file	a	b	c
+    a	hello	1	1	1
+    b	hello	1	1	1
 
 
 
@@ -249,27 +260,26 @@ sed 3q testdata/plan.tsv
 tarcreate -C testdata testdata/plan.tsv | tarshow -c 3
 ```
 
-    ['@file', 'a', 'b', 'c']
-    __key__             	000000000
+    ['__key__', '@file', 'a', 'b', 'c']
+    __key__             	a
     __source__          	-
     a                   	b'1'
     b                   	b'1'
     c                   	b'1'
     file                	b'world\n'
     
-    __key__             	000000001
+    __key__             	b
     __source__          	-
     a                   	b'1'
     b                   	b'1'
     c                   	b'1'
     file                	b'world\n'
     
-    __key__             	000000002
+    __key__             	c
     __source__          	-
     a                   	b'1'
     b                   	b'1'
-    c                   	b'1'
-    file                	b'world\n'
+    c                   	b'f'
     
 
 
@@ -328,26 +338,26 @@ The `tarproc` utility lets you map command line programs and scripts over the sa
 
 
 ```sos
-time tarproc -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar > _out.tar
+time tarproc -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar -o - > _out.tar
 ```
 
     
-    real	0m3.971s
-    user	0m3.637s
-    sys	0m0.320s
+    real	0m3.866s
+    user	0m3.520s
+    sys	0m0.332s
 
 
 You can even parallelize this (somewhat analogous to `xargs`):
 
 
 ```sos
-time tarproc -p 8 -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar > _out.tar
+time tarproc -p 8 -c "gm mogrify -size 256x256 *.png" < testdata/imagenet-000000.tar -o - > _out.tar
 ```
 
     
-    real	0m0.900s
-    user	0m4.259s
-    sys	0m0.366s
+    real	0m0.804s
+    user	0m4.190s
+    sys	0m0.389s
 
 
 # Python Interface
@@ -374,8 +384,3 @@ for sample in islice(reader.TarIterator("gs://lpr-imagenet/imagenet_train-0000.t
     dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
     dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
 
-
-
-```sos
-
-```

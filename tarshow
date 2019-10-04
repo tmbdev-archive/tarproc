@@ -32,12 +32,18 @@ Dump data from a web dataset.
 """)
 parser.add_argument("-f", "--field", default=None,
                     help="field to be viewed")
-parser.add_argument("-c", "--count", type=int, default=10000000000)
-parser.add_argument("-N", "--normalize", action="store_true")
-parser.add_argument("-C", "--cmap", default="gray")
-parser.add_argument("--delay", type=float, default=1e9)
-parser.add_argument("--silent", action="store_true")
-parser.add_argument("--verbatim-keys", action="store_true")
+parser.add_argument("-c", "--count", type=int, default=10000000000,
+                    help="number of records to display")
+parser.add_argument("-N", "--normalize", action="store_true",
+                    help="normalize images before display")
+parser.add_argument("-C", "--cmap", default="gray",
+                    help="color map for images")
+parser.add_argument("-d", "--delay", type=float, default=1e9,
+                    help="delay between  displayed images records")
+parser.add_argument("--silent", action="store_true",
+                    help="less output")
+parser.add_argument("--verbatim-keys", action="store_true",
+                    help="compare keys verbatim (rather than case sensitive)")
 parser.add_argument("input", default="-", nargs="?", help="tar file")
 args = parser.parse_args()
 

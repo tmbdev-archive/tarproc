@@ -1,7 +1,7 @@
-@file	a	b	c
-hello	1	1	1
-hello	1	1	1
-hello	1	1	1
-hello	1	1	1
-hello	1	1	1
-hello	1	1	1
+__key__	@file	a	b	c
+a	hello	1	1	1
+b	hello	1	1	1
+c	hello	1	1	1
+d	hello	1	1	1
+e	hello	1	1	1
+f	hello	1	1	1

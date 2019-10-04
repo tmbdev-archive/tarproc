@@ -80,7 +80,10 @@ class TarWriter(object):
             assert isinstance(v, (bytes)),  \
                 "converter didn't yield bytes: %s" % ((k, type(v)),)
             now = time.time()
-            ti = tarfile.TarInfo(key + "." + k)
+            if isinstance(key, bytes):
+                key = key.decode("utf-8")
+            fname = str(key + "." + k)
+            ti = tarfile.TarInfo(fname)
             ti.size = len(v)
             ti.mtime = now
             ti.mode = self.mode
