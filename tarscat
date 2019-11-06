@@ -16,9 +16,7 @@ import random
 
 from tarproclib import reader, writer, gopen
 
-parser = argparse.ArgumentParser("""
-Dump data from a web dataset.
-""")
+parser = argparse.ArgumentParser("""Concatenate tar files sequentially to standard out.""")
 parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-T", "--filelist", default=None)
 parser.add_argument("-b", "--braceexpand", action="store_true")

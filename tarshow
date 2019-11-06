@@ -27,9 +27,7 @@ def input_with_timeout(prompt="", timeout=1e9):
     else:
         return None
 
-parser = argparse.ArgumentParser("""
-Dump data from a web dataset.
-""")
+parser = argparse.ArgumentParser("""Show data inside a tar file.""")
 parser.add_argument("-f", "--field", default=None,
                     help="field to be viewed")
 parser.add_argument("-c", "--count", type=int, default=10000000000,

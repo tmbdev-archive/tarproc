@@ -22,6 +22,7 @@ tarproc tarshow tarsort tarsplit tarpcat
 prereqs = """
     braceexpand
     simplejson
+    matplotlib
 """.split()
 
 setup(

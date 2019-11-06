@@ -21,7 +21,7 @@ import numpy as np
 import simplejson
 from tarproclib import reader, writer, paths
 
-parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser = argparse.ArgumentParser("Split a tar file into shards based on size or number of samples.")
 parser.add_argument("-n", "--num-samples", default=100000, type=int)
 parser.add_argument("-s", "--max-size", default=1e9, type=float)
 parser.add_argument("-v", "--verbose", action="store_true")

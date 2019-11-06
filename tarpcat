@@ -18,9 +18,7 @@ import queue as mpq
 
 from tarproclib import reader, writer, gopen
 
-parser = argparse.ArgumentParser("""
-Read, shuffle, and combine multiple shards in parallel.
-""")
+parser = argparse.ArgumentParser("""Read, shuffle, and combine multiple shards in parallel.""")
 parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-T", "--filelist", default=None)
 parser.add_argument("-b", "--braceexpand", action="store_true")
