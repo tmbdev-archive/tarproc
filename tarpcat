@@ -25,6 +25,7 @@ parser.add_argument("-b", "--braceexpand", action="store_true")
 parser.add_argument("-c", "--count", type=int, default=1000000000)
 parser.add_argument("-s", "--shuffle", type=int, default=0)
 parser.add_argument("-p", "--workers", type=int, default=8)
+parser.add_argument("-o", "--output", default="-")
 parser.add_argument("--dummy", action="store_true")
 parser.add_argument("input", nargs="*")
 args = parser.parse_args()
@@ -135,7 +136,7 @@ source = parallel_source()
 if args.shuffle > 0:
     source = ishuffle(source, args.shuffle)
 
-sink = writer.TarWriter(sys.stdout.buffer, keep_meta=True)
+sink = writer.TarWriter(args.output, keep_meta=True)
 total = 0
 for sample in source:
     total += 1

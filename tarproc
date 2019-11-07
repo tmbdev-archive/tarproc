@@ -162,10 +162,6 @@ atexit.register(lambda: shutil.rmtree(args.working_dir))
 sink = None
 
 if args.output is not None:
-    if args.output == "-":
-        args.output = sys.stdout.buffer
-    else:
-        args.output = open(args.output, "wb")
     sink = writer.TarWriter(args.output)
     atexit.register(lambda: sink.close())
 

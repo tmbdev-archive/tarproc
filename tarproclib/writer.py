@@ -9,11 +9,12 @@ import tarfile
 import getpass
 import socket
 import io
+from urllib.parse import urlparse
 from itertools import groupby, islice
 
-from . import paths
+from . import paths, gopen
 
-class TarWriter(object):
+class TarWriter1(object):
     """ """
     def __init__(self, fileobj, keep_meta=False, user="bigdata", group="bigdata", mode=0o0444, compress=None, encoder=None):
         """A class for writing dictionaries to tar files.
@@ -24,11 +25,15 @@ class TarWriter(object):
         :param encoder: sample encoding (Default value = None)
         :param compress:  (Default value = None)
         """
+        print(fileobj, file=sys.stderr)
         if isinstance(fileobj, str):
             if compress is False: tarmode = "w|"
             elif compress is True: tarmode = "w|gz"
             else: tarmode = "w|gz" if fileobj.endswith("gz") else "w|"
-            fileobj = open(fileobj, "wb")
+            if fileobj == "-": 
+                fileobj = sys.stdout.buffer
+            else:
+                fileobj = open(fileobj, "wb")
         else:
             tarmode = "w|gz" if compress is True else "w|"
         self.encoder = lambda x:x if encoder is None else encoder
@@ -95,3 +100,16 @@ class TarWriter(object):
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
+
+zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
+
+def TarWriter(url, **kw):
+    if not isinstance(url, str):
+        return TarWriter1(url, **kw)
+    addr = urlparse(url)
+    scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+    if scheme in zmq_schemes:
+        from . import zcom
+        return zcom.Connection(url, **kw)
+    else:
+        return TarWriter1(url, **kw)

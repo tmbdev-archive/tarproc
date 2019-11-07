@@ -15,6 +15,7 @@ import time
 import re
 import tarfile
 import braceexpand as braceexpandlib
+from urllib.parse import urlparse
 from itertools import groupby, islice
 
 from . import paths, gopen
@@ -95,7 +96,7 @@ def tariterator(fileobj, keys=paths.base_plus_ext, decoder=None, suffixes=None, 
         samples = (decoder(sample) for sample in samples)
     return samples
 
-class TarIterator(object):
+class TarIterator1(object):
     def __init__(self, url, braceexpand=True, **kw):
         self.start = 0
         self.end = math.inf
@@ -120,3 +121,16 @@ class TarIterator(object):
                     yield sample
                     count += 1
             if count >= self.end: break
+
+zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
+
+def TarIterator(url, **kw):
+    if not isinstance(url, str):
+        return TarIterator1(url, **kw)
+    addr = urlparse(url)
+    scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+    if scheme in zmq_schemes:
+        from . import zcom
+        return zcom.Connection(url, **kw)
+    else:
+        return TarIterator1(url, **kw)
