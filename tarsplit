@@ -72,9 +72,11 @@ def finish_shard():
             base=base,
             ext=ext)
         cmd = args.command.format(**kw)
+        print(f"# {cmd}", file=sys.stderr)
         status = os.system(cmd)
         assert status==0, (status, cmd)
         if not args.nodelete:
+            print(f"# removing {shard_name}", file=sys.stderr)
             os.unlink(shard_name)
 
 if "{" not in args.output:
