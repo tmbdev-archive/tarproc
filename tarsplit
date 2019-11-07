@@ -30,6 +30,7 @@ parser.add_argument("-o", "--output", default="temp")
 parser.add_argument("-O", "--open", default=None)
 parser.add_argument("--start", default=0, type=int)
 parser.add_argument("--maxshards", default=1000000000, type=int)
+parser.add_argument("--nodelete", action="store_true", help="don't delete after executing command")
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
@@ -73,6 +74,8 @@ def finish_shard():
         cmd = args.command.format(**kw)
         status = os.system(cmd)
         assert status==0, (status, cmd)
+        if not args.nodelete:
+            os.unlink(shard_name)
 
 if "{" not in args.output:
     output_pattern = args.output + "-{shard:06d}.tar"
