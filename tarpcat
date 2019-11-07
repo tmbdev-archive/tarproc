@@ -40,10 +40,12 @@ def read_filelist(filelist):
 def reader_proc(file_queue, sample_queue):
     try:
         fname = file_queue.get(timeout=5.0)
+        print(f"# opening {fname}", file=sys.stderr)
         for sample in reader.TarIterator(fname, braceexpand=False):
             if "__source__" not in sample:
                 sample["__source__"] = fname
             sample_queue.put(sample)
+        print(f"# done {fname}", file=sys.stderr)
     except mpq.Empty:
         pass
 
