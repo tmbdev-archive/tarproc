@@ -43,7 +43,6 @@ def zmq_connect(socket, urls, topic=""):
         assert len(url) > 1
         addr = urlparse(url)
         scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
-        print(url, addr, scheme, transport)
         kind, bind = schemes[scheme]
         logging.info("kind %s bind %s", kind, bind)
         try:
