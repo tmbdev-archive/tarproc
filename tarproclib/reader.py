@@ -125,9 +125,7 @@ class TarIterator1(object):
 zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
 
 def TarIterator(url, **kw):
-    if not isinstance(url, str):
-        return TarIterator1(url, **kw)
-    addr = urlparse(url)
+    addr = urlparse(url if isinstance(url, str) else url[0])
     scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
     if scheme in zmq_schemes:
         from . import zcom

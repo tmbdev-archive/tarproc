@@ -127,22 +127,6 @@ class Connection(object):
         data = {k.decode("utf-8") if isinstance(k, bytes) else k: v for k, v in sample.items()}
         return data
 
-    def serve(self, source, report=-1):
-        """Serve data from an iterator.
-
-        :param source: iterator yielding lists/tuples of tensors
-        :param report: how often to report statistics (Default value = -1)
-
-        """
-        count = 0
-        next_report = 0
-        for sample in source:
-            self.send(sample)
-            if report > 0 and count >= next_report:
-                print("count", count, self.stats.summary())
-                next_report += report
-            count += self.batchsize(sample)
-
     def __iter__(self, report=-1):
         """Receive data through an iterator"""
         count = 0
@@ -156,6 +140,66 @@ class Connection(object):
                 print("count", count, self.stats.summary())
                 next_report += report
             yield result
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+class MultiWriter(object):
+    """A class for sending/receiving samples via ZMQ sockets."""
+    def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1):
+        """Initialize a connection.
+
+        :param urls:  list of ZMQ-URL to connect to (Default value = None)
+        :param noexpand: do not expand braces in URLs (Default value = False)
+
+        """
+        self.context = zmq.Context()
+        self.sockets = None
+        self.linger = linger
+        self.mode = "round_robin"
+        self.count = 0
+        if urls is not None:
+            self.connect(urls, noexpand=False)
+
+    def connect(self, urls, topic="", noexpand=False):
+        urls = urls2list(urls, noexpand=noexpand)
+        self.sockets = []
+        for url in urls:
+            s = zmq_make(self.context, url, linger=self.linger)
+            zmq_connect(s, [url])
+            self.sockets.append(s)
+
+    def close(self, linger=-1):
+        """Close the connection."""
+        for s in self.sockets:
+            s.close(linger=linger)
+
+    def send(self, sample):
+        """Send data over the connection.
+
+        :param sample: sample to be sent
+
+        """
+        assert isinstance(sample, dict)
+        data = msgpack.packb(sample)
+        if self.mode == "round_robin":
+            index = self.count%len(self.sockets)
+        else:
+            index = randint(0, len(self.sockets)-1)
+        self.sockets[index].send(data)
+        self.count += 1
+
+    def send_eof(self):
+        data = msgpack.packb(dict(__EOF__=True))
+        for s in self.sockets:
+            s.send(data)
+        time.sleep(1.0)
+
+    def write(self, sample):
+        self.send(sample)
 
     def __enter__(self):
         return self
