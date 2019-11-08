@@ -114,7 +114,7 @@ class Connection(object):
         data = msgpack.packb(sample)
         self.socket.send(data)
         if self.verbose and self.count%10000==0:
-            print("# send", self, count)
+            print("# send", self, self.count)
         self.count += 1
 
     def send_eof(self):
@@ -132,7 +132,7 @@ class Connection(object):
         assert isinstance(sample, dict)
         data = {k.decode("utf-8") if isinstance(k, bytes) else k: v for k, v in sample.items()}
         if self.verbose and self.count%10000==0:
-            print("# recv", self, count)
+            print("# recv", self, self.count)
         self.count += 1
         return data
 
@@ -201,7 +201,7 @@ class MultiWriter(object):
             index = randint(0, len(self.sockets)-1)
         self.sockets[index].send(data)
         if self.verbose and self.count%10000==0:
-            print("# send", self, count)
+            print("# send", self, self.count)
         self.count += 1
 
     def send_eof(self):
