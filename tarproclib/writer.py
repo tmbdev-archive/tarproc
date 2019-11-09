@@ -25,7 +25,6 @@ class TarWriter1(object):
         :param encoder: sample encoding (Default value = None)
         :param compress:  (Default value = None)
         """
-        print(fileobj, file=sys.stderr)
         if isinstance(fileobj, str):
             if compress is False: tarmode = "w|"
             elif compress is True: tarmode = "w|gz"
