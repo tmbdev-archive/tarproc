@@ -8,7 +8,7 @@ import msgpack
 import zmq
 import logging
 
-verbose = int(environ.get("verbose", 1))
+verbose = int(os.environ.get("verbose", 1))
 
 schemes = dict(
     # (KIND, BIND)
