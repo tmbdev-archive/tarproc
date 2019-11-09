@@ -28,6 +28,7 @@ parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-C", "--command", default=None)
 parser.add_argument("-o", "--output", default="temp")
 parser.add_argument("-O", "--open", default=None)
+parser.add_argument("-z", "--compress", action="store_true")
 parser.add_argument("--start", default=0, type=int)
 parser.add_argument("--maxshards", default=1000000000, type=int)
 parser.add_argument("--nodelete", action="store_true", help="don't delete after executing command")
@@ -109,7 +110,8 @@ for sample in reader.TarIterator(args.input):
             sink_stream = stream
         else:
             sink_stream = open(shard_name, "wb")
-        sink = writer.TarWriter(sink_stream)
+        compress = None if not args.compress else True
+        sink = writer.TarWriter(sink_stream, compress=compress)
         shard += 1
     sink.write(sample)
     count += 1

@@ -8,6 +8,7 @@ import msgpack
 import zmq
 import logging
 
+verbose = int(environ.get("verbose", 1))
 
 schemes = dict(
     # (KIND, BIND)
@@ -31,7 +32,7 @@ def zmq_make(context, url, linger=0):
     return socket
 
 
-def zmq_connect(socket, urls, topic="", verbose=False):
+def zmq_connect(socket, urls, topic=""):
     """Explicitly connect to a ZMQ socket.
 
     :param url: ZMQ-URL to connect to  (Default value = "")
@@ -78,7 +79,7 @@ def urls2list(urls, noexpand=False):
 
 class Connection(object):
     """A class for sending/receiving samples via ZMQ sockets."""
-    def __init__(self, urls=None, noexpand=False, keep_meta=True, verbose=True, **kw):
+    def __init__(self, urls=None, noexpand=False, keep_meta=True, **kw):
         """Initialize a connection.
 
         :param urls:  list of ZMQ-URL to connect to (Default value = None)
@@ -88,17 +89,16 @@ class Connection(object):
         self.context = zmq.Context()
         self.socket = None
         self.count = 0
-        self.verbose = verbose
         if urls is not None:
             urls = urls2list(urls, noexpand=noexpand)
             self.socket = zmq_make(self.context, urls[0])
-            zmq_connect(self.socket, urls, verbose=self.verbose)
+            zmq_connect(self.socket, urls)
 
     def connect(self, urls, topic="", noexpand=False):
         urls = urls2list(urls, noexpand=noexpand)
         self.socket = zmq_make(self.context, urls[0])
         for url in urls:
-            zmq_connect(self.socket, url, verbose=self.verbose)
+            zmq_connect(self.socket, url)
 
     def close(self, linger=-1):
         """Close the connection."""
@@ -113,7 +113,7 @@ class Connection(object):
         assert isinstance(sample, dict)
         data = msgpack.packb(sample)
         self.socket.send(data)
-        if self.verbose and self.count%10000==0:
+        if verbose and self.count%10000==0:
             print("# send", self, self.count)
         self.count += 1
 
@@ -131,7 +131,7 @@ class Connection(object):
         sample = msgpack.unpackb(data)
         assert isinstance(sample, dict)
         data = {k.decode("utf-8") if isinstance(k, bytes) else k: v for k, v in sample.items()}
-        if self.verbose and self.count%10000==0:
+        if verbose and self.count%10000==0:
             print("# recv", self, self.count)
         self.count += 1
         return data
@@ -158,7 +158,7 @@ class Connection(object):
 
 class MultiWriter(object):
     """A class for sending/receiving samples via ZMQ sockets."""
-    def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1, verbose=True):
+    def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1, **kw):
         """Initialize a connection.
 
         :param urls:  list of ZMQ-URL to connect to (Default value = None)
@@ -170,7 +170,6 @@ class MultiWriter(object):
         self.linger = linger
         self.mode = "round_robin"
         self.count = 0
-        self.verbose = verbose
         if urls is not None:
             self.connect(urls, noexpand=False)
 
@@ -179,7 +178,7 @@ class MultiWriter(object):
         self.sockets = []
         for url in urls:
             s = zmq_make(self.context, url, linger=self.linger)
-            zmq_connect(s, [url], verbose=self.verbose)
+            zmq_connect(s, [url])
             self.sockets.append(s)
 
     def close(self, linger=-1):
@@ -200,7 +199,7 @@ class MultiWriter(object):
         else:
             index = randint(0, len(self.sockets)-1)
         self.sockets[index].send(data)
-        if self.verbose and self.count%10000==0:
+        if verbose and self.count%10000==0:
             print("# send", self, self.count)
         self.count += 1
 
