@@ -23,6 +23,7 @@ parser.add_argument("-b", "--braceexpand", action="store_true")
 parser.add_argument("-s", "--skip", type=int, default=0)
 parser.add_argument("-c", "--count", type=int, default=1000000000)
 parser.add_argument("-o", "--output", default="-")
+parser.add_argument("--output-mode", default="random")
 parser.add_argument("--shuffle", type=int, default=0)
 parser.add_argument("--eof", action="store_true")
 parser.add_argument("--nodata", action="store_true")
@@ -54,7 +55,7 @@ if filelist != ["-"]:
     dprint(f"# got {len(filelist)} files")
 
 n = 0
-sink = writer.TarWriter(args.output, keep_meta=True)
+sink = writer.TarWriter(args.output, keep_meta=True, output_mode=args.output_mode)
 if args.shuffle > 0:
     random.shuffle(filelist)
 for fname in filelist:

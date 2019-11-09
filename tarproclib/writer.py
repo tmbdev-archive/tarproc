@@ -16,7 +16,7 @@ from . import paths, gopen
 
 class TarWriter1(object):
     """ """
-    def __init__(self, fileobj, keep_meta=False, user="bigdata", group="bigdata", mode=0o0444, compress=None, encoder=None):
+    def __init__(self, fileobj, keep_meta=False, user="bigdata", group="bigdata", mode=0o0444, compress=None, encoder=None, output_mode=None):
         """A class for writing dictionaries to tar files.
 
         :param fileobj: fileobj: file name for tar file (.tgz)

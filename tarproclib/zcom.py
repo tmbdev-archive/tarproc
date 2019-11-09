@@ -159,7 +159,7 @@ class Connection(object):
 
 class MultiWriter(object):
     """A class for sending/receiving samples via ZMQ sockets."""
-    def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1, **kw):
+    def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1, output_mode="random", **kw):
         """Initialize a connection.
 
         :param urls:  list of ZMQ-URL to connect to (Default value = None)
@@ -169,7 +169,7 @@ class MultiWriter(object):
         self.context = zmq.Context()
         self.sockets = None
         self.linger = linger
-        self.mode = "round_robin"
+        self.mode = mode
         self.count = 0
         if urls is not None:
             self.connect(urls, noexpand=False)
@@ -197,8 +197,10 @@ class MultiWriter(object):
         data = msgpack.packb(sample)
         if self.mode == "round_robin":
             index = self.count%len(self.sockets)
-        else:
+        elif self.mode == "random":
             index = randint(0, len(self.sockets)-1)
+        else:
+            raise ValueError(f"{self.mode}: unknown MultiWriter mode")
         self.sockets[index].send(data)
         if verbose and self.count%10000==0:
             print("# send", self, self.count)
