@@ -14,7 +14,7 @@ import subprocess
 import braceexpand
 import random
 
-from tarproclib import reader, writer, gopen
+from tarproclib import reader, writer, gopen, proc
 
 parser = argparse.ArgumentParser("""Concatenate tar files sequentially to standard out.""")
 parser.add_argument("-v", "--verbose", action="store_true")
@@ -23,7 +23,7 @@ parser.add_argument("-b", "--braceexpand", action="store_true")
 parser.add_argument("-s", "--skip", type=int, default=0)
 parser.add_argument("-c", "--count", type=int, default=1000000000)
 parser.add_argument("-o", "--output", default="-")
-parser.add_argument("--shuffle", action="store_true")
+parser.add_argument("--shuffle", type=int, default=0)
 parser.add_argument("--eof", action="store_true")
 parser.add_argument("--nodata", action="store_true")
 parser.add_argument("input", nargs="*")
@@ -55,11 +55,14 @@ if filelist != ["-"]:
 
 n = 0
 sink = writer.TarWriter(args.output, keep_meta=True)
-if args.shuffle:
+if args.shuffle > 0:
     random.shuffle(filelist)
 for fname in filelist:
     if fname != "-": dprint(f"# {n} {fname}")
-    for sample in reader.TarIterator(fname, braceexpand=False):
+    source = reader.TarIterator(fname, braceexpand=False)
+    if args.shuffle > 0:
+        source = proc.ishuffle(iter(source), args.shuffle)
+    for sample in source:
         if "__source__" not in sample:
             sample["__source__"] = fname
         if n >= args.count:
