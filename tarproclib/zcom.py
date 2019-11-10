@@ -169,7 +169,7 @@ class MultiWriter(object):
         self.context = zmq.Context()
         self.sockets = None
         self.linger = linger
-        self.mode = mode
+        self.output_mode = output_mode
         self.count = 0
         if urls is not None:
             self.connect(urls, noexpand=False)
@@ -195,12 +195,12 @@ class MultiWriter(object):
         """
         assert isinstance(sample, dict)
         data = msgpack.packb(sample)
-        if self.mode == "round_robin":
+        if self.output_mode == "round_robin":
             index = self.count%len(self.sockets)
-        elif self.mode == "random":
+        elif self.output_mode == "random":
             index = randint(0, len(self.sockets)-1)
         else:
-            raise ValueError(f"{self.mode}: unknown MultiWriter mode")
+            raise ValueError(f"{self.output_mode}: unknown MultiWriter mode")
         self.sockets[index].send(data)
         if verbose and self.count%10000==0:
             print("# send", self, self.count)
