@@ -198,7 +198,7 @@ class MultiWriter(object):
         if self.output_mode == "round_robin":
             index = self.count%len(self.sockets)
         elif self.output_mode == "random":
-            index = randint(0, len(self.sockets)-1)
+            index = random.randint(0, len(self.sockets)-1)
         else:
             raise ValueError(f"{self.output_mode}: unknown MultiWriter mode")
         self.sockets[index].send(data)
