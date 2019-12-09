@@ -51,6 +51,7 @@ parser.add_argument("-s", "--separator", default="",
 parser.add_argument("--interpreter", default="bash",
                     help="interpreter used for script argument")
 parser.add_argument("-o", "--output", default=None)
+parser.add_argument("--count", type=int, default=9999999999)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
@@ -182,6 +183,7 @@ def handle_result(new_samples):
 
 if args.parallel==0:
     for i, sample in enumerate(reader.TarIterator(args.input)):
+        if i >= args.count: break
         assert isinstance(sample, dict)
         new_samples = proc_sample1((i, sample))
         handle_result(new_samples)
