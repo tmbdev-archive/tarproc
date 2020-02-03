@@ -17,6 +17,7 @@ from itertools import groupby, islice
 from multiprocessing import Pool
 import sqlite3
 import pickle
+import tarfile
 
 import matplotlib
 import numpy as np
@@ -29,6 +30,7 @@ parser.add_argument("-s", "--sortkey", default="__key__")
 parser.add_argument("-S", "--sorttype", default=None)
 parser.add_argument("-r", "--report", default=0, type=int)
 parser.add_argument("-t", "--tempfile", default="_tarsort-{pid}.db")
+parser.add_argument("-o", "--output", default="-")
 parser.add_argument("--update", action="store_true")
 parser.add_argument("--keep", action="store_true")
 parser.add_argument("--commit", default=1000, type=int)
@@ -68,27 +70,37 @@ create table tarsort (
 )
 """)
 
-for i, sample in enumerate(reader.TarIterator(args.input)):
-    if args.report>0 and i%args.report==0:
-        dprint(">", i, sample.get("__key__"))
-    sortkey = sample.get(args.sortkey, "")
-    sortkey = sorttype(sortkey)
-    key = sample.get(args.key, "__{}__".format(i))
-    cmd = "insert" if not args.update else "insert or replace"
-    db.execute(f"{cmd} into tarsort values (?,?,?)",
-               (sortkey, key, pickle.dumps(sample)))
-    if i%args.commit==0: db.commit()
+try:
+    for i, sample in enumerate(reader.TarIterator(args.input)):
+        if args.report>0 and i%args.report==0:
+            dprint(">", i, sample.get("__key__"))
+        sortkey = sample.get(args.sortkey, "")
+        sortkey = sorttype(sortkey)
+        key = sample.get(args.key, "__{}__".format(i))
+        cmd = "insert" if not args.update else "insert or replace"
+        db.execute(f"{cmd} into tarsort values (?,?,?)",
+                   (sortkey, key, pickle.dumps(sample)))
+        if i%args.commit==0: db.commit()
+except tarfile.ReadError:
+    pass
 
 db.commit()
 
-sink = writer.TarWriter(sys.stdout.buffer)
-cur = db.execute("select sample from tarsort order by sortkey")
-for i, (sample,) in enumerate(cur):
-    sample = pickle.loads(sample)
-    if args.report>0 and i%args.report==0:
-        dprint("<", i, sample.get("__key__"))
-    sink.write(sample)
-sink.close()
-
-if not args.keep:
-    os.unlink(tempfile)
+try:
+    if args.output=="-":
+        stream = sys.stdout.buffer
+    else:
+        stream = open(args.output, "wb")
+    sink = writer.TarWriter(stream)
+    cur = db.execute("select sample from tarsort order by sortkey")
+    for i, (sample,) in enumerate(cur):
+        sample = pickle.loads(sample)
+        if args.report>0 and i%args.report==0:
+            dprint("<", i, sample.get("__key__"))
+        sink.write(sample)
+    sink.close()
+finally:
+    if not args.keep:
+        os.unlink(tempfile)
+    try: stream.close()
+    except: pass
