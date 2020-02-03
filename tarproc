@@ -21,7 +21,16 @@ import numpy as np
 import simplejson
 from tarproclib import reader, writer, paths
 
-parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser = argparse.ArgumentParser("""\
+Run a command line tool over all samples.
+
+Each sample is extracted into its own directory with
+a common basename (default=sample) and the extensions from the sample.
+
+Example:
+
+    tarproc -I png -c 'convert sample.jpg sample.png' inputs.tar -o outputs.tar
+""")
 parser.add_argument("-v", "--verbose", action="store_true",
                     help="output extra information")
 parser.add_argument("-q", "--silent", action="store_true",
@@ -50,6 +59,8 @@ parser.add_argument("-s", "--separator", default="",
                     help="separator between key and new file bases")
 parser.add_argument("--interpreter", default="bash",
                     help="interpreter used for script argument")
+parser.add_argument("--count", type=int, default=1000000000,
+                    help="stop after processing this many samples")
 parser.add_argument("-o", "--output", default=None)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
@@ -102,23 +113,27 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
         if status != 0:
             if args.error_handling == "ignore":
                 if not args.silent:
-                    dprint("ignore", status, sample.get("__key__", "?"))
+                    dprint("exit status (ignore):", status, sample.get("__key__", "?"))
                 pass
             elif args.error_handling == "skip":
                 if not args.silent:
-                    dprint("skip", status, sample.get("__key__", "?"))
+                    dprint("exit status (skip)", status, sample.get("__key__", "?"))
                 return []
             else:
                 if not args.silent:
-                    dprint("abort", status, sample.get("__key__", "?"))
+                    dprint("exit status (abort)", status, sample.get("__key__", "?"))
                 assert status == 0, status
 
         # gather up the result files
         files = sorted([fname for fname in glob.glob("*.*") if os.path.isfile(fname)])
         if args.exclude is not None:
+            if args.verbose: print(f"< exclude {files}")
             files = [fname for fname in files if not re.search(args.exclude, fname)]
+            if args.verbose: print(f"> exclude {files}")
         if args.include is not None:
+            if args.verbose: print(f"< include {files}")
             files = [fname for fname in files if re.search(args.include, fname)]
+            if args.verbose: print(f"> include {files}")
 
         # processing may have produced multiple outputs; gather them up separately
         bases = sorted(set(map(paths.filebase, files)))
@@ -181,12 +196,18 @@ def handle_result(new_samples):
             sink.write(s)
 
 if args.parallel==0:
+    count = 0
     for i, sample in enumerate(reader.TarIterator(args.input)):
+        if count >= args.count: break
         assert isinstance(sample, dict)
         new_samples = proc_sample1((i, sample))
         handle_result(new_samples)
+        count += 1
 elif args.parallel>0:
+    count = 0
     with Pool(processes=args.parallel) as pool:
         for new_samples in pool.imap_unordered(proc_sample1,
                 enumerate(reader.TarIterator(args.input))):
+            if count >= args.count: break
             handle_result(new_samples)
+            count += 1
