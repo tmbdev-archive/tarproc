@@ -63,8 +63,8 @@ prefix = "GOPEN_"
 
 handlers = {
     "gs": "gsutil cat '{}'",
-    "http": "curl --fail -s '{}' --output -",
-    "https": "curl --fail -s '{}' --output -",
+    "http": "curl --fail -L -s '{}' --output -",
+    "https": "curl --fail -L -s '{}' --output -",
     "file": "dd if='{}' bs=4M"
 }
 
