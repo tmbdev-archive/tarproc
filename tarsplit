@@ -81,7 +81,10 @@ def finish_shard():
             os.unlink(shard_name)
 
 if "{" not in args.output:
-    output_pattern = args.output + "-{shard:06d}.tar"
+    if args.compress:
+        output_pattern = args.output + "-{shard:06d}.tgz"
+    else:
+        output_pattern = args.output + "-{shard:06d}.tar"
 else:
     output_pattern = args.output
 
