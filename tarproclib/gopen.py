@@ -16,6 +16,11 @@ import re
 
 bufsize = 8192
 
+class GopenException(Exception):
+    def __init__(self, info):
+        super().__init__()
+        self.info = info
+
 class Pipe(object):
     def __init__(self, *args, raise_errors=True, **kw):
         self.open(*args, **kw)
@@ -24,7 +29,8 @@ class Pipe(object):
         self.proc = subprocess.Popen(*args, bufsize=bufsize, stdout=subprocess.PIPE, **kw)
         self.args = (args, kw)
         self.stream = self.proc.stdout
-        assert self.stream is not None
+        if self.stream is None:
+            raise GopenException(f"{self.args}: no stream (open)")
         self.status = None
         return self
     def read(self, *args, **kw):
@@ -33,7 +39,7 @@ class Pipe(object):
         if self.status is not None:
             self.status = self.proc.wait()
             if self.status != 0 and self.raise_errors:
-                raise Exception(f"{self.args}: exit {self.status} (read)")
+                raise GopenException(f"{self.args}: exit {self.status} (read)")
         return result
     def readLine(self, *args, **kw):
         result = self.stream.readLine(*args, **kw)
@@ -41,7 +47,7 @@ class Pipe(object):
         if self.status is not None:
             self.status = self.proc.wait()
             if self.status != 0 and self.raise_errors:
-                raise Exception(f"{self.args}: exit {self.status} (readLine)")
+                raise GopenException(f"{self.args}: exit {self.status} (readLine)")
     def close(self):
         self.stream.close()
         try:
@@ -53,7 +59,7 @@ class Pipe(object):
             self.status = self.proc.wait(1.0)
         if self.raise_errors == "all":
             if self.status != 0 and self.raise_errors:
-                raise Exception(f"{self.args}: exit {self.status} (close)")
+                raise GopenException(f"{self.args}: exit {self.status} (close)")
     def __enter__(self):
         return self
     def __exit__(self, type, value, traceback):

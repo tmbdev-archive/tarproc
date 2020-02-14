@@ -14,6 +14,7 @@ import sys
 import time
 import re
 import tarfile
+import random
 import braceexpand as braceexpandlib
 from urllib.parse import urlparse
 from itertools import groupby, islice
@@ -97,9 +98,10 @@ def tariterator(fileobj, keys=paths.base_plus_ext, decoder=None, suffixes=None, 
     return samples
 
 class TarIterator1(object):
-    def __init__(self, url, braceexpand=True, **kw):
+    def __init__(self, url, braceexpand=True, shuffle=False, allow_missing=False, **kw):
         self.start = 0
         self.end = math.inf
+        self.allow_missing = allow_missing
         if len(url.rsplit("#", 1)) > 1:
             url, fragment = url.rsplit("#", 1)
             self.start, self.end = [int(x) for x in (fragment.rsplit(",") * 2)[:2]]
@@ -108,18 +110,26 @@ class TarIterator1(object):
             self.urls = list(braceexpandlib.braceexpand(url))
         else:
             self.urls = [url]
+        if shuffle:
+            random.shuffle(self.urls)
         self.kw = kw
     def __iter__(self):
         count = 0
         for url in self.urls:
-            with gopen.gopen(url, "rb") as stream:
-                for sample in tariterator(stream, **self.kw):
-                    if count < self.start: continue
-                    if count >= self.end: break
-                    if "__source__" not in sample:
-                        sample["__source__"] = url
-                    yield sample
-                    count += 1
+            try:
+                with gopen.gopen(url, "rb") as stream:
+                    for sample in tariterator(stream, **self.kw):
+                        if count < self.start: continue
+                        if count >= self.end: break
+                        if "__source__" not in sample:
+                            sample["__source__"] = url
+                        yield sample
+                        count += 1
+            except gopen.GopenException as e:
+                if self.allow_missing:
+                    print(e.info, file=sys.stderr)
+                else:
+                    raise e
             if count >= self.end: break
 
 zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
