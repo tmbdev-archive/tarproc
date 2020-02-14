@@ -42,6 +42,8 @@ parser.add_argument("--silent", action="store_true",
                     help="less output")
 parser.add_argument("--verbatim-keys", action="store_true",
                     help="compare keys verbatim (rather than case sensitive)")
+parser.add_argument("--use-keyboard", action="store_true",
+                    help="use the keyboard rather than the mouse for input")
 parser.add_argument("input", default="-", nargs="?", help="tar file")
 args = parser.parse_args()
 
@@ -88,11 +90,14 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
                 else:
                     plt.imshow(image)
             plt.show()
-            plt.waitforbuttonpress(timeout=0.001)
-            #plt.waitforbuttonpress(timeout=args.delay)
+            if not args.use_keyboard:
+                plt.waitforbuttonpress(timeout=max(1e-3, args.delay))
+            else:
+                plt.waitforbuttonpress(timeout=0.001)
         if not args.silent:
             print(file=sys.stderr)
-        input_with_timeout(timeout=args.delay)
+        if args.use_keyboard:
+            input_with_timeout(timeout=args.delay)
     except Exception as e:
         print(e)
         time.sleep(1)
