@@ -61,9 +61,19 @@ class Pipe(object):
 
 prefix = "GOPEN_"
 
-handlers = {k[len(prefix):].lower(): v
-                for k, v in os.environ.items()
-                    if k.startswith(prefix)}
+handlers = {
+    "gs": "gsutil cat '{}'",
+    "http": "curl --fail -L -s '{}' --output -",
+    "https": "curl --fail -L -s '{}' --output -",
+    "file": "dd if='{}' bs=4M"
+}
+
+handlers.update({
+    k[len(prefix):].lower(): v
+        for k, v in os.environ.items()
+            if k.startswith(prefix)
+})
+
 
 def gopen(url, mode="rb"):
     if url == "-":
