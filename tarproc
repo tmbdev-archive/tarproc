@@ -21,7 +21,7 @@ import numpy as np
 import simplejson
 from tarproclib import reader, writer, paths
 
-parser = argparse.ArgumentParser("""\
+epilog = """
 Run a command line tool over all samples.
 
 Each sample is extracted into its own directory with
@@ -30,7 +30,13 @@ a common basename (default=sample) and the extensions from the sample.
 Example:
 
     tarproc -I png -c 'convert sample.jpg sample.png' inputs.tar -o outputs.tar
-""")
+"""
+
+parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Run commands over all samples.",
+        epilog=epilog)
+
 parser.add_argument("-v", "--verbose", action="store_true",
                     help="output extra information")
 parser.add_argument("-q", "--silent", action="store_true",

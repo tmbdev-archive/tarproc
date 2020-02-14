@@ -27,7 +27,7 @@ def input_with_timeout(prompt="", timeout=1e9):
     else:
         return None
 
-parser = argparse.ArgumentParser("""Show data inside a tar file.""")
+parser = argparse.ArgumentParser("Show data inside a tar file.")
 parser.add_argument("-f", "--field", default=None,
                     help="field to be viewed")
 parser.add_argument("-c", "--count", type=int, default=10000000000,
@@ -56,6 +56,8 @@ if args.field is not None:
 else:
     fields = None
 
+output = sys.stdout
+
 for i, sample in enumerate(reader.TarIterator(args.input)):
     if i >= args.count: break
     try:
@@ -63,7 +65,7 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
             sample = {k.lower(): v for k, v in sample.items()}
         if not args.silent:
             for k, v in sorted(list(sample.items())):
-                print(f"{k:20s}\t{str(v)[:60]}", file=sys.stderr)
+                print(f"{k:20s}\t{str(v)[:60]}", file=output)
         if fields is not None:
             plt.clf()
             for i, field in enumerate(fields):
@@ -76,7 +78,7 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
                 image = PIL.Image.open(io.BytesIO(image))
                 if not args.silent:
                     k = "__image__"
-                    print(f"{k:20s}\t{image}", file=sys.stderr)
+                    print(f"{k:20s}\t{image}", file=output)
                 if len(fields) > 1:
                     plt.subplot(1, len(fields), i+1)
                 image = np.asarray(image)
@@ -95,7 +97,7 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
             else:
                 plt.waitforbuttonpress(timeout=0.001)
         if not args.silent:
-            print(file=sys.stderr)
+            print(file=output)
         if args.use_keyboard:
             input_with_timeout(timeout=args.delay)
     except Exception as e:

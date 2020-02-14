@@ -17,18 +17,29 @@ from itertools import groupby, islice
 from multiprocessing import Pool
 import csv
 import codecs
-
 import matplotlib
 import numpy as np
 import simplejson
 from tarproclib import reader, writer, paths
 
-parser = argparse.ArgumentParser("Run a command line tool over all samples.")
-parser.add_argument("-f", "--delim", default="")
-parser.add_argument("-k", "--key", default="{record:09d}")
-parser.add_argument("-C", "--dir", default=None)
+epilog = """
+The column headers contain the output filename extensions.  Each column
+contains either data or a filename.  Headers starting with "@" denote
+that the column contains actual file names.  If there is a __key__ column,
+it is used as the key, otherwise records are numbered sequentially.
+"""
+
+parser = argparse.ArgumentParser("Create a tar file for a csv/tsv plan.",
+        epilog=epilog)
+parser.add_argument("-f", "--delim", default="",
+                    help="delimiter in csv/tsv file")
+parser.add_argument("-k", "--key", default="{record:09d}",
+                    help="output format for record numbers")
+parser.add_argument("-C", "--dir", default=None,
+                    help="change into directory before executing")
+parser.add_argument("-o", "--output", default="-",
+                    help="output file (default: stdout)")
 parser.add_argument("plan")
-parser.add_argument("output", default="-", nargs="?")
 args = parser.parse_args()
 
 def dprint(*args, **kw):

@@ -15,9 +15,7 @@ import numpy as np
 import pickle
 from tarproclib import reader
 
-parser = argparse.ArgumentParser("""
-Dump data from a web dataset.
-""")
+parser = argparse.ArgumentParser("Dump the first matching file from a tar file.")
 parser.add_argument("-S", "--select", default="True",
                     help="expression that must evaluate to true before saving")
 parser.add_argument("-v", "--verbose", action="store_true",
