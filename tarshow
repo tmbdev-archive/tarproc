@@ -36,7 +36,7 @@ parser.add_argument("-N", "--normalize", action="store_true",
                     help="normalize images before display")
 parser.add_argument("-C", "--cmap", default="gray",
                     help="color map for images")
-parser.add_argument("-d", "--delay", type=float, default=1e9,
+parser.add_argument("-d", "--delay", type=float, default=100000,
                     help="delay between  displayed images records")
 parser.add_argument("--silent", action="store_true",
                     help="less output")
