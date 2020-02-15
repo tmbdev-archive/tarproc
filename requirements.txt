@@ -1,0 +1,4 @@
+future
+msgpack
+braceexpand
+simplejson
