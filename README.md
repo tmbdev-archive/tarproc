@@ -3,12 +3,12 @@
 For many big data applications, it is convenient to process data in record-sequential formats.
 One of the most common such formats is `tar` archives.
 
-We adopt the following conventions for record storage in tar archive:
-
-- files are split into a key and a field name
-- the key is the directory name plus the file name before the first dot
-- the field name is the file name after the first dot
-- files with the same key are grouped together and treated as a sample or record
+All we really need for sequential data processing is that files that need to be processed together
+are adjacent in a `tar` file and that we can group together files into records.
+The convention that the `tarproc` utilities follow is that the entire path up to the first dot ('.')
+in the filename constitutes the file prefix, and that all files with the same prefix are treated
+as part of the same record. For many datasets, files in this format can simply be generated
+with `tar --sorted=name cf data.tar ...`.
 
 This convention is followed both by these utilities as well as the `webdataset` `DataSet` implementation for PyTorch, available at http://github.com/tmbdev/webdataset
 
@@ -24,7 +24,6 @@ tar tf testdata/imagenet-000000.tar | sed 5q
     10.wnid
     10.xml
     12.cls
-    tar: write error
 
 
 The `tarshow` utility displays images and data from tar files.
@@ -146,7 +145,7 @@ tarscat testdata/sample.tar testdata/sample.tar | tarsplit -n 60
     # writing temp-000002.tar (120, 37637)
 
 
-The `tarscat` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example. Downloader commands are specified by setting environment variables for each URL schema.
+The `tarcats` utility also lets you specify a downloader command (for accessing object stores) and can expand shard syntax. Here is a more complex example. Downloader commands are specified by setting environment variables for each URL schema.
 
 
 ```sos
@@ -156,7 +155,7 @@ export GOPEN_HTTP="curl --silent -L '{}'"
 
 
 ```sos
-tarscat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
+tarcats -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 ```
 
     # got 1 files
@@ -176,7 +175,7 @@ tarscat -c 10 'gs://lpr-imagenet/imagenet_train-0000.tgz' | tar2tsv -f cls
 
 
 ```sos
-tarscat --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' > _temp.tar
+tarcats --shuffle -c 3 -b 'gs://lpr-imagenet/imagenet_train-{0000..0147}.tgz' > _temp.tar
 ```
 
     # got 148 files
