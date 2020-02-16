@@ -51,10 +51,6 @@ def test_tarsplit():
     run("./tarsplit --help",
         "Split a tar")
 
-def test_tarstats():
-    run("./tarstats --help",
-        "Provide summary information")
-
 def test_tsv2tar():
     run("./tsv2tar --help",
         "Create a tar file")
