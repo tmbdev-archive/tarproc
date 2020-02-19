@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e -x
+
+cp README.md docs/index.md
+
+. ./venv/bin/activate
+pydocmd simple tarproclib.reader+ | sed 's/:param /- /' > docs/reader.md
+pydocmd simple tarproclib.writer+ | sed 's/:param /- /' > docs/writer.md
+pydocmd simple tarproclib.zcom+ | sed 's/:param /- /' > docs/zcom.md
+
+commands="tar2tsv tarcats tarfirst tarmix tarpcat tarproc tarshow tarsort tarsplit tsv2tar"
+
+for command in $commands; do
+    echo
+    echo "## $command"
+    echo
+    echo '```'
+    $command --help | sed '
+        s/^ *usage: *//
+    '
+    echo '```'
+done > docs/commands.md
+
+# jupyter nbconvert ...
+# mv examples/*.md docs/.
+# mkdocs build

@@ -8,3 +8,5 @@ msgpack
 braceexpand
 simplejson
 pyzmq
+
+../objio

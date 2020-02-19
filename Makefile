@@ -1,5 +1,7 @@
 #!/bin/bash
 
+COMMANDS=tar2tsv tarcats tarfirst tarmix tarpcat tarproc tarproclib tarshow tarsort tarsplit test testdata tsv2tar
+
 tests: venv
 	rm -f objio.yaml objio.yml
 	. ./venv/bin/activate; python3 -m pytest -v -x
@@ -14,13 +16,7 @@ venv: FORCE
 
 docs: FORCE
 	mkdir -p docs
-	cp README.md docs/index.md
-	. ./venv/bin/activate; pydocmd simple tarproclib.reader+ | sed 's/:param /- /' > docs/reader.md
-	. ./venv/bin/activate; pydocmd simple tarproclib.writer+ | sed 's/:param /- /' > docs/writer.md
-	. ./venv/bin/activate; pydocmd simple tarproclib.zcom+ | sed 's/:param /- /' > docs/zcom.md
-	#mv examples/*.md docs
-	#./cmd2md obj > docs/obj.md
-	#mkdocs build
+	./gendocs
 
 push: FORCE
 	make tests

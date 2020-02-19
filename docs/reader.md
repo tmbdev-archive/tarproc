@@ -2,7 +2,7 @@
 
 ## tariterator
 ```python
-tariterator(fileobj, keys=<function base_plus_ext at 0x7ff171d75dd0>, decoder=None, suffixes=None, errors=True, container=None)
+tariterator(fileobj, keys=<function base_plus_ext at 0x7f09c96bddd0>, decoder=None, suffixes=None, errors=True, container=None)
 ```
 Iterate through training samples stored in a sharded tar file.
 
