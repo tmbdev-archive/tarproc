@@ -15,7 +15,7 @@ venv: FORCE
 docs: FORCE
 	mkdir -p docs
 	cp README.md docs/index.md
-	. ./venv/bin/activate; pydocmd simple tarproclib.reader+ | sed 's/:param /- /' > docs/gopen.md
+	. ./venv/bin/activate; pydocmd simple tarproclib.reader+ | sed 's/:param /- /' > docs/reader.md
 	. ./venv/bin/activate; pydocmd simple tarproclib.writer+ | sed 's/:param /- /' > docs/writer.md
 	. ./venv/bin/activate; pydocmd simple tarproclib.zcom+ | sed 's/:param /- /' > docs/zcom.md
 	#mv examples/*.md docs

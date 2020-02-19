@@ -1,5 +1,17 @@
 # tarproclib.reader
 
+## tariterator
+```python
+tariterator(fileobj, keys=<function base_plus_ext at 0x7ff171d75dd0>, decoder=None, suffixes=None, errors=True, container=None)
+```
+Iterate through training samples stored in a sharded tar file.
+
+- fileobj:
+- check_sorted:  (Default value = False)
+- keys:  (Default value = base_plus_ext)
+- decode:  (Default value = True)
+
+
 ## TarIterator1
 ```python
 TarIterator1(self, url, braceexpand=True, shuffle=False, allow_missing=False, **kw)

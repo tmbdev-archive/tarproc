@@ -5,7 +5,7 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-__all__ = "TarIterator1 TarIterator".split()
+__all__ = "tariterator TarIterator1 TarIterator".split()
 
 import math
 import random
