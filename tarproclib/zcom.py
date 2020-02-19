@@ -1,14 +1,21 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import logging
 import os
+import random
 import sys
 import time
 from builtins import object
 from urllib.parse import urlparse
-import braceexpand
-import random
 
+import braceexpand
 import msgpack
 import zmq
-import logging
 
 verbose = int(os.environ.get("verbose", 1))
 
@@ -24,9 +31,16 @@ schemes = dict(
     zrsub=(zmq.SUB, True)
 )
 
+
 def zmq_make(context, url, linger=0):
+    """Make a ZMQ socket for a context and url.
+
+    :param context: context
+    :param url: target URL
+    :param linger: linger flag
+    """
     addr = urlparse(url)
-    scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+    scheme, transport = (addr.scheme.split("+", 2) + ["tcp"])[:2]
     kind, bind = schemes[scheme]
     logging.info("kind %s bind %s", kind, bind)
     socket = context.socket(kind)
@@ -47,11 +61,11 @@ def zmq_connect(socket, urls, topic=""):
         if verbose:
             print("# zmq_connect", socket, url, file=sys.stderr)
         addr = urlparse(url)
-        scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+        scheme, transport = (addr.scheme.split("+", 2) + ["tcp"])[:2]
         kind, bind = schemes[scheme]
         logging.info("kind %s bind %s", kind, bind)
         try:
-            location = transport+"://"+addr.netloc
+            location = transport + "://" + addr.netloc
             if transport == "ipc":
                 location += addr.path
             if bind:
@@ -69,6 +83,7 @@ def zmq_connect(socket, urls, topic=""):
                 url, location, kind))
             raise e
 
+
 def urls2list(urls, noexpand=False):
     if isinstance(urls, str):
         urls = [urls]
@@ -79,8 +94,10 @@ def urls2list(urls, noexpand=False):
         urls = temp
     return urls
 
+
 class Connection(object):
     """A class for sending/receiving samples via ZMQ sockets."""
+
     def __init__(self, urls=None, noexpand=False, keep_meta=True, **kw):
         """Initialize a connection.
 
@@ -115,7 +132,7 @@ class Connection(object):
         assert isinstance(sample, dict)
         data = msgpack.packb(sample)
         self.socket.send(data)
-        if verbose and self.count%10000==0:
+        if verbose and self.count % 10000 == 0:
             print("# send", self, self.count)
         self.count += 1
 
@@ -133,7 +150,7 @@ class Connection(object):
         sample = msgpack.unpackb(data)
         assert isinstance(sample, dict)
         data = {k.decode("utf-8") if isinstance(k, bytes) else k: v for k, v in sample.items()}
-        if verbose and self.count%10000==0:
+        if verbose and self.count % 10000 == 0:
             print("# recv", self, self.count)
         self.count += 1
         return data
@@ -144,7 +161,6 @@ class Connection(object):
         next_report = 0
         while True:
             result = self.recv()
-            #print("***", result.keys(), file=sys.stderr)
             if result.get("__EOF__", False):
                 break
             if report > 0 and count >= next_report:
@@ -158,8 +174,10 @@ class Connection(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+
 class MultiWriter(object):
     """A class for sending/receiving samples via ZMQ sockets."""
+
     def __init__(self, urls=None, noexpand=False, keep_meta=True, linger=-1, output_mode="random", **kw):
         """Initialize a connection.
 
@@ -197,13 +215,13 @@ class MultiWriter(object):
         assert isinstance(sample, dict)
         data = msgpack.packb(sample)
         if self.output_mode == "round_robin":
-            index = self.count%len(self.sockets)
+            index = self.count % len(self.sockets)
         elif self.output_mode == "random":
-            index = random.randint(0, len(self.sockets)-1)
+            index = random.randint(0, len(self.sockets) - 1)
         else:
             raise ValueError(f"{self.output_mode}: unknown MultiWriter mode")
         self.sockets[index].send(data)
-        if verbose and self.count%10000==0:
+        if verbose and self.count % 10000 == 0:
             print("# send", self, self.count)
         self.count += 1
 

@@ -9,20 +9,21 @@ import argparse
 import atexit
 import glob
 import os
-import shutil
-import sys
-import time
+import pickle
 import re
+import shutil
+import sqlite3
+import sys
+import tarfile
+import time
 from itertools import groupby, islice
 from multiprocessing import Pool
-import sqlite3
-import pickle
-import tarfile
 
 import matplotlib
 import numpy as np
 import simplejson
-from tarproclib import reader, writer, paths
+
+from tarproclib import paths, reader, writer
 
 parser = argparse.ArgumentParser("Sort the samples inside a tar file.")
 parser.add_argument("-k", "--key", default="__key__")
@@ -38,7 +39,7 @@ parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 if args.sorttype is None:
-    sorttype = lambda x: x
+    def sorttype(x): return x
     dbtype = "text"
 elif args.sorttype == "int":
     sorttype = int
@@ -49,7 +50,8 @@ elif args.sorttype == "float":
 elif args.sorttype == "shuffle":
     def hash(s):
         import hashlib
-        if isinstance(s, str): s = s.encode("utf-8")
+        if isinstance(s, str):
+            s = s.encode("utf-8")
         return hashlib.md5(s).hexdigest()
     sorttype = hash
     dbtype = "text"
@@ -58,6 +60,7 @@ else:
 
 
 def dprint(*args, **kw): print(*args, file=sys.stderr, **kw)
+
 
 tempfile = args.tempfile.format(pid=os.getpid())
 assert not os.path.exists(tempfile), tempfile
@@ -72,7 +75,7 @@ create table tarsort (
 
 try:
     for i, sample in enumerate(reader.TarIterator(args.input)):
-        if args.report>0 and i%args.report==0:
+        if args.report > 0 and i % args.report == 0:
             dprint(">", i, sample.get("__key__"))
         sortkey = sample.get(args.sortkey, "")
         sortkey = sorttype(sortkey)
@@ -80,14 +83,15 @@ try:
         cmd = "insert" if not args.update else "insert or replace"
         db.execute(f"{cmd} into tarsort values (?,?,?)",
                    (sortkey, key, pickle.dumps(sample)))
-        if i%args.commit==0: db.commit()
+        if i % args.commit == 0:
+            db.commit()
 except tarfile.ReadError:
     pass
 
 db.commit()
 
 try:
-    if args.output=="-":
+    if args.output == "-":
         stream = sys.stdout.buffer
     else:
         stream = open(args.output, "wb")
@@ -95,12 +99,14 @@ try:
     cur = db.execute("select sample from tarsort order by sortkey")
     for i, (sample,) in enumerate(cur):
         sample = pickle.loads(sample)
-        if args.report>0 and i%args.report==0:
+        if args.report > 0 and i % args.report == 0:
             dprint("<", i, sample.get("__key__"))
         sink.write(sample)
     sink.close()
 finally:
     if not args.keep:
         os.unlink(tempfile)
-    try: stream.close()
-    except: pass
+    try:
+        stream.close()
+    except:
+        pass

@@ -7,20 +7,22 @@
 
 import argparse
 import atexit
+import codecs
+import csv
 import glob
 import os
+import re
 import shutil
 import sys
 import time
-import re
 from itertools import groupby, islice
 from multiprocessing import Pool
-import csv
-import codecs
+
 import matplotlib
 import numpy as np
 import simplejson
-from tarproclib import reader, writer, paths
+
+from tarproclib import paths, reader, writer
 
 epilog = """
 The column headers contain the output filename extensions.  Each column
@@ -30,7 +32,7 @@ it is used as the key, otherwise records are numbered sequentially.
 """
 
 parser = argparse.ArgumentParser("Create a tar file for a csv/tsv plan.",
-        epilog=epilog)
+                                 epilog=epilog)
 parser.add_argument("-f", "--delim", default="",
                     help="delimiter in csv/tsv file")
 parser.add_argument("-k", "--key", default="{record:09d}",
@@ -42,10 +44,12 @@ parser.add_argument("-o", "--output", default="-",
 parser.add_argument("plan")
 args = parser.parse_args()
 
+
 def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
 
-if args.delim=="":
+
+if args.delim == "":
     if args.plan.endswith(".csv"):
         args.delim = ","
     else:
@@ -58,11 +62,12 @@ dprint(header)
 for row in plan:
     assert len(row) == len(header)
     for h, v in zip(header, row):
-        if h[0]=="@":
-            if args.dir: v = os.path.join(args.dir, v)
+        if h[0] == "@":
+            if args.dir:
+                v = os.path.join(args.dir, v)
             assert os.path.exists(v), v
 
-if args.output=="-":
+if args.output == "-":
     output = sys.stdout.buffer
 else:
     output = open(args.output, "wb")
@@ -75,8 +80,9 @@ record = 0
 for row in plan:
     sample = {}
     for h, v in zip(header, row):
-        if h[0]=="@":
-            if args.dir: v = os.path.join(args.dir, v)
+        if h[0] == "@":
+            if args.dir:
+                v = os.path.join(args.dir, v)
             sample[h[1:]] = paths.read_binary(v)
         else:
             sample[h] = v.encode("utf-8")

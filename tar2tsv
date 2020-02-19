@@ -5,15 +5,16 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
+import os
+import pickle
+import sys
 import time
 from itertools import islice
 
 import matplotlib
 import numpy as np
-import pickle
+
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("Extract textual information from tar training files.")
@@ -28,8 +29,10 @@ parser.add_argument("--noheader", action="store_true",
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
+
 def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
+
 
 def getfirst(a, keys, default=None):
     if isinstance(keys, str):
@@ -40,14 +43,17 @@ def getfirst(a, keys, default=None):
             return result
     return default
 
+
 def parse_field_spec(fields):
     if isinstance(fields, str):
         fields = fields.split()
     return [field.split(";") for field in fields]
 
+
 fields = parse_field_spec(args.fields)
 if not args.nokey:
     fields = [["__key__"]] + fields
+
 
 def unicode(s):
     if isinstance(s, str):
@@ -56,11 +62,13 @@ def unicode(s):
         return s.decode("utf-8")
     return str(s)
 
+
 if not args.noheader:
     print("\t".join([f[0] for f in fields]))
 
 for i, sample in enumerate(reader.TarIterator(args.input)):
-    if i >= args.count: break
+    if i >= args.count:
+        break
     assert isinstance(sample, dict), sample
     result = [unicode(getfirst(sample, k)) for k in fields]
     print("\t".join(result))

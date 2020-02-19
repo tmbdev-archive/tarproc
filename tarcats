@@ -5,16 +5,17 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
+import os
+import random
+import subprocess
+import sys
 import time
 from itertools import islice
-import subprocess
-import braceexpand
-import random
 
-from tarproclib import reader, writer, gopen, proc
+import braceexpand
+
+from tarproclib import gopen, proc, reader, writer
 
 parser = argparse.ArgumentParser("Concatenate tar files sequentially to standard out.")
 parser.add_argument("-v", "--verbose", action="store_true")
@@ -30,13 +31,16 @@ parser.add_argument("--nodata", action="store_true")
 parser.add_argument("input", nargs="*")
 args = parser.parse_args()
 
+
 def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
+
 
 def read_filelist():
     with gopen.gopen(args.filelist, "r") as stream:
         for line in stream:
             yield line.strip()
+
 
 if args.nodata:
     filelist = []
@@ -59,7 +63,8 @@ sink = writer.TarWriter(args.output, keep_meta=True, output_mode=args.output_mod
 if args.shuffle > 0:
     random.shuffle(filelist)
 for fname in filelist:
-    if fname != "-": dprint(f"# {n} {fname}")
+    if fname != "-":
+        dprint(f"# {n} {fname}")
     source = reader.TarIterator(fname, braceexpand=False)
     if args.shuffle > 0:
         source = proc.ishuffle(iter(source), args.shuffle)
@@ -71,9 +76,10 @@ for fname in filelist:
         if n >= args.skip:
             sink.write(sample)
         n += 1
-    if n >= args.count: break
+    if n >= args.count:
+        break
 if args.eof:
     sink.send_eof()
-#sink.socket.close(linger=-1)
-#sink.context.term()
+# sink.socket.close(linger=-1)
+# sink.context.term()
 sink.close()

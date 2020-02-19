@@ -1,4 +1,10 @@
+pytest
+coverage
+pydoc-markdown
+licenseheaders
+
 future
 msgpack
 braceexpand
 simplejson
+pyzmq

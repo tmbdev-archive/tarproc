@@ -5,21 +5,22 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
+import multiprocessing as mp
+import os
+import queue as mpq
+import random
+import subprocess
+import sys
 import time
 from itertools import islice
-import subprocess
-import braceexpand
-import random
-import multiprocessing as mp
-import queue as mpq
 
-from tarproclib import reader, writer, gopen, proc
+import braceexpand
+
+from tarproclib import gopen, proc, reader, writer
 
 parser = argparse.ArgumentParser(
-        description="Read, shuffle, and combine multiple shards in parallel.")
+    description="Read, shuffle, and combine multiple shards in parallel.")
 parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-T", "--filelist", default=None)
 parser.add_argument("-b", "--braceexpand", action="store_true")
@@ -31,13 +32,16 @@ parser.add_argument("--dummy", action="store_true")
 parser.add_argument("input", nargs="*")
 args = parser.parse_args()
 
+
 def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
+
 
 def read_filelist(filelist):
     with gopen.gopen(filelist, "r") as stream:
         for line in stream:
             yield line.strip()
+
 
 def reader_proc(file_queue, sample_queue):
     try:
@@ -50,6 +54,7 @@ def reader_proc(file_queue, sample_queue):
         print(f"# done {fname}", file=sys.stderr)
     except mpq.Empty:
         pass
+
 
 if args.filelist is not None:
     filelist = list(read_filelist(args.filelist))
@@ -66,17 +71,18 @@ n = 0
 if args.shuffle > 0:
     random.shuffle(filelist)
 
-file_queue = mp.Queue(len(filelist)+10)
+file_queue = mp.Queue(len(filelist) + 10)
 sample_queue = mp.Queue(10000)
 
 for fname in filelist:
     file_queue.put(fname)
 
+
 def parallel_source():
     jobs = []
 
     for i in range(args.workers):
-        job_args=(file_queue, sample_queue)
+        job_args = (file_queue, sample_queue)
         process = mp.Process(target=reader_proc, args=job_args)
         jobs.append(process)
 
@@ -104,6 +110,7 @@ def parallel_source():
             job.kill()
             job.join()
 
+
 source = parallel_source()
 
 if args.shuffle > 0:
@@ -117,5 +124,5 @@ for sample in source:
         dprint(sample.get("__key__", total), sample.get("__source__", None))
     else:
         sink.write(sample)
-    if total>args.count:
+    if total > args.count:
         break

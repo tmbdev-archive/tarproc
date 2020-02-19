@@ -6,29 +6,37 @@
 #
 
 import math
-import glob
-import imp
-import os
-import shutil
-import sys
-import time
-import re
-import tarfile
 import random
-import braceexpand as braceexpandlib
+import re
+import sys
+import tarfile
 from urllib.parse import urlparse
-from itertools import groupby, islice
 
-from . import paths, gopen
+import braceexpand as braceexpandlib
+
+from . import gopen, paths
+
+__all__ = "TarReader1 TarReader".split()
 
 meta_prefix = "__"
 meta_suffix = "__"
 
+
 def regquote(s):
-   return re.sub(r'([][.^$*+])', r'\\\1', s)
+    """Quote regular expressions.
+
+    :param s: string to be quoted.
+    """
+    return re.sub(r'([][.^$*+])', r'\\\1', s)
+
 
 def valid_sample(sample):
+    """Check whether the sample is valid (not empty and not None).
+
+    :param sample: sample, should be a dict
+    """
     return sample is not None and sample != {}
+
 
 def tardata(fileobj, skip_meta=r"__[^/]*__($|/)"):
     """Iterator yielding filename, content pairs for the given tar stream.
@@ -97,7 +105,16 @@ def tariterator(fileobj, keys=paths.base_plus_ext, decoder=None, suffixes=None, 
         samples = (decoder(sample) for sample in samples)
     return samples
 
+
 class TarIterator1(object):
+    """Iterate of tar files consisting of samples.
+
+    :param url: source URL
+    :param braceexpand: expand braces in the source URL
+    :param shuffle: shuffle the samples
+    :param allow_missing: allow missing shards
+    :param **kw:
+    """
     def __init__(self, url, braceexpand=True, shuffle=False, allow_missing=False, **kw):
         self.start = 0
         self.end = math.inf
@@ -113,14 +130,17 @@ class TarIterator1(object):
         if shuffle:
             random.shuffle(self.urls)
         self.kw = kw
+
     def __iter__(self):
         count = 0
         for url in self.urls:
             try:
                 with gopen.gopen(url, "rb") as stream:
                     for sample in tariterator(stream, **self.kw):
-                        if count < self.start: continue
-                        if count >= self.end: break
+                        if count < self.start:
+                            continue
+                        if count >= self.end:
+                            break
                         if "__source__" not in sample:
                             sample["__source__"] = url
                         yield sample
@@ -130,15 +150,25 @@ class TarIterator1(object):
                     print(e.info, file=sys.stderr)
                 else:
                     raise e
-            if count >= self.end: break
+            if count >= self.end:
+                break
+
 
 zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
 
+
 def TarIterator(url, **kw):
+    """Open an iterator of tar files.
+
+    This can open either ZMQ URLs or object store URLs.
+
+    :param url: source URL
+    :param **kw:
+    """
     if not isinstance(url, (str, list)):
         return TarIterator1(url, **kw)
     addr = urlparse(url if isinstance(url, str) else url[0])
-    scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+    scheme, transport = (addr.scheme.split("+", 2) + ["tcp"])[:2]
     if scheme in zmq_schemes:
         from . import zcom
         return zcom.Connection(url, **kw)

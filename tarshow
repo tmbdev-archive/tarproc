@@ -5,27 +5,30 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
-import time
+import io
+import os
+import pickle
 import re
 import select
+import sys
+import time
+from itertools import islice
 
-import io
 import matplotlib
 import numpy as np
-import pickle
-from itertools import islice
+
 from tarproclib import reader
+
 
 def input_with_timeout(prompt="", timeout=1e9):
     print(prompt, flush=True, end="")
-    ready, _, _ = select.select([sys.stdin], [],[], timeout)
+    ready, _, _ = select.select([sys.stdin], [], [], timeout)
     if ready:
-        return sys.stdin.readline().rstrip('\n') # expect stdin to be line-buffered
+        return sys.stdin.readline().rstrip('\n')  # expect stdin to be line-buffered
     else:
         return None
+
 
 parser = argparse.ArgumentParser("Show data inside a tar file.")
 parser.add_argument("-f", "--field", default=None,
@@ -59,7 +62,8 @@ else:
 output = sys.stdout
 
 for i, sample in enumerate(reader.TarIterator(args.input)):
-    if i >= args.count: break
+    if i >= args.count:
+        break
     try:
         if not args.verbatim_keys:
             sample = {k.lower(): v for k, v in sample.items()}
@@ -80,7 +84,7 @@ for i, sample in enumerate(reader.TarIterator(args.input)):
                     k = "__image__"
                     print(f"{k:20s}\t{image}", file=output)
                 if len(fields) > 1:
-                    plt.subplot(1, len(fields), i+1)
+                    plt.subplot(1, len(fields), i + 1)
                 image = np.asarray(image)
                 if args.normalize:
                     image = image.astype(float)

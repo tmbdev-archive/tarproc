@@ -1,21 +1,22 @@
-import glob
-import imp
-import os
-import shutil
-import sys
-import time
-import re
-import tarfile
-import getpass
-import socket
-import io
-from urllib.parse import urlparse
-from itertools import groupby, islice
+#!/usr/bin/python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
 
-from . import paths, gopen
+import io
+import sys
+import tarfile
+import time
+from urllib.parse import urlparse
+
+__all__ = "TarWriter1 TarWriter".split()
+
 
 class TarWriter1(object):
     """ """
+
     def __init__(self, fileobj, keep_meta=False, user="bigdata", group="bigdata", mode=0o0444, compress=None, encoder=None, output_mode=None):
         """A class for writing dictionaries to tar files.
 
@@ -26,16 +27,19 @@ class TarWriter1(object):
         :param compress:  (Default value = None)
         """
         if isinstance(fileobj, str):
-            if compress is False: tarmode = "w|"
-            elif compress is True: tarmode = "w|gz"
-            else: tarmode = "w|gz" if fileobj.endswith("gz") else "w|"
-            if fileobj == "-": 
+            if compress is False:
+                tarmode = "w|"
+            elif compress is True:
+                tarmode = "w|gz"
+            else:
+                tarmode = "w|gz" if fileobj.endswith("gz") else "w|"
+            if fileobj == "-":
                 fileobj = sys.stdout.buffer
             else:
                 fileobj = open(fileobj, "wb")
         else:
             tarmode = "w|gz" if compress is True else "w|"
-        self.encoder = lambda x:x if encoder is None else encoder
+        self.encoder = lambda x: x if encoder is None else encoder
         self.keep_meta = keep_meta
         self.stream = fileobj
         self.tarstream = tarfile.open(fileobj=fileobj, mode=tarmode)
@@ -100,13 +104,20 @@ class TarWriter1(object):
             total += ti.size
         return total
 
+
 zmq_schemes = set("zpush zpull zpub zsub zrpush zrpull zrpub zrsub".split())
 
+
 def TarWriter(url, **kw):
+    """Write either to a URL or a ZMQ stream.
+
+    :param url: output URL
+    :param **kw: other parameters
+    """
     if not isinstance(url, (str, list)):
         return TarWriter1(url, **kw)
     addr = urlparse(url if isinstance(url, str) else url[0])
-    scheme, transport = (addr.scheme.split("+", 2)+["tcp"])[:2]
+    scheme, transport = (addr.scheme.split("+", 2) + ["tcp"])[:2]
     if scheme in zmq_schemes:
         from . import zcom
         return zcom.MultiWriter(url, **kw)

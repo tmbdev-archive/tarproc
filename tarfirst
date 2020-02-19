@@ -5,14 +5,15 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
+import os
+import pickle
+import sys
 import time
 
 import matplotlib
 import numpy as np
-import pickle
+
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("Dump the first matching file from a tar file.")
@@ -25,16 +26,21 @@ parser.add_argument("-f", "--field", default="img;image;ppm;pgm;pbm;jpeg;jpg;png
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
+
 class Record(object):
     def __init__(self, d):
         self.__dict__ = d
+
     def __getitem__(self, attr):
         return self.__dict__[attr]
+
     def __setitem__(self, attr, value):
         self.__dict__[attr] = value
 
+
 def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
+
 
 def getfirst(a, keys, default=None):
     if isinstance(keys, str):
@@ -45,10 +51,12 @@ def getfirst(a, keys, default=None):
             return result, k
     return default
 
+
 def parse_field_spec(fields):
     if isinstance(fields, str):
         fields = fields.split()
     return [field.split(";") for field in fields]
+
 
 for sample in reader.TarIterator(args.input):
     assert isinstance(sample, dict), sample
@@ -59,7 +67,7 @@ for sample in reader.TarIterator(args.input):
         continue
     result, key = getfirst(sample, args.field)
     if result is not None:
-        dprint(sample["__key__"]+"."+key)
+        dprint(sample["__key__"] + "." + key)
         assert isinstance(result, bytes)
         with os.fdopen(sys.stdout.fileno(), "wb", closefd=False) as stdout:
             stdout.write(result)

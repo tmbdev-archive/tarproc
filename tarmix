@@ -5,20 +5,21 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import sys
 import argparse
+import os
+import random
+import subprocess
+import sys
 import time
 from itertools import islice
-import subprocess
+
 import braceexpand
-import random
-import simplejson
 import numpy as np
+import simplejson
 
-from tarproclib import reader, writer, gopen, proc
+from tarproclib import gopen, proc, reader, writer
 
-description="Randomly mix data sources to standard out."
+description = "Randomly mix data sources to standard out."
 epilog = """
 The mix is specified by a YAML file that looks something like this:
 
@@ -57,9 +58,9 @@ Global parameters:
 """
 
 parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=description,
-        epilog=epilog)
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=description,
+    epilog=epilog)
 parser.add_argument("-v", "--verbose", action="store_true")
 parser.add_argument("-c", "--count", type=int, default=1000000000)
 parser.add_argument("-o", "--output", default="-")
@@ -81,17 +82,20 @@ weights = []
 probabilities = []
 accum = []
 
+
 def repeat(source, n):
     for i in range(n):
         for sample in source:
             yield sample
+
 
 def multistream(files, n, **kw):
     sources = []
     while True:
         while len(sources) < n and len(files) > 0:
             sources.append(iter(reader.TarIterator(files.pop(0), **kw)))
-        if len(sources) == 0: return
+        if len(sources) == 0:
+            return
         index = np.random.randint(0, len(sources))
         try:
             sample = next(sources[index])
@@ -125,7 +129,8 @@ accum /= np.sum(accum)
 accum = np.add.accumulate(accum)
 probabilities = np.array(probabilities)
 
-assert (probabilities>=0.0).all() and (probabilities<=1.0).all()
+assert (probabilities >= 0.0).all() and (probabilities <= 1.0).all()
+
 
 def sampling():
     while True:
@@ -138,6 +143,7 @@ def sampling():
             yield sample
         except StopIteration:
             return
+
 
 source = sampling()
 
