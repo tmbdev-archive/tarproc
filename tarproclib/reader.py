@@ -5,6 +5,8 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
+__all__ = "TarIterator1 TarIterator".split()
+
 import math
 import random
 import re
@@ -15,8 +17,6 @@ from urllib.parse import urlparse
 import braceexpand as braceexpandlib
 
 from . import gopen, paths
-
-__all__ = "TarReader1 TarReader".split()
 
 meta_prefix = "__"
 meta_suffix = "__"
