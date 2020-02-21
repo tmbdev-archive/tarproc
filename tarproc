@@ -12,13 +12,6 @@ import os
 import re
 import shutil
 import sys
-import time
-from itertools import groupby, islice
-from multiprocessing import Pool
-
-import matplotlib
-import numpy as np
-import simplejson
 
 from tarproclib import paths, reader, writer
 
@@ -104,7 +97,7 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
         if fieldmode == "ignore":
             sample = {k: v for k, v in sample.items() if k in fields or k[0] == "_"}
         elif fieldmode == "error":
-            sample = {k: sample[v] for k in fields}
+            sample = {k: sample[k] for k in fields}
 
     old_sample = sample
 
@@ -223,6 +216,7 @@ if args.parallel == 0:
         handle_result(new_samples)
         count += 1
 elif args.parallel > 0:
+    from multiprocessing import Pool
     count = 0
     with Pool(processes=args.parallel) as pool:
         for new_samples in pool.imap_unordered(proc_sample1,

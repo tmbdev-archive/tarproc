@@ -6,18 +6,13 @@
 #
 
 import argparse
-import os
 import random
-import subprocess
-import sys
-import time
-from itertools import islice
 
 import braceexpand
 import numpy as np
-import simplejson
+import yaml
 
-from tarproclib import gopen, proc, reader, writer
+from tarproclib import proc, reader, writer
 
 description = "Randomly mix data sources to standard out."
 epilog = """

@@ -6,21 +6,11 @@
 #
 
 import argparse
-import atexit
-import glob
 import os
-import re
-import shutil
 import subprocess
 import sys
-import time
-from itertools import groupby, islice
 
-import matplotlib
-import numpy as np
-import simplejson
-
-from tarproclib import paths, reader, writer
+from tarproclib import reader, writer
 
 parser = argparse.ArgumentParser("Split a tar file into shards based on size or number of samples.")
 parser.add_argument("-n", "--num-samples", default=100000, type=float)

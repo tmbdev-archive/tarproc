@@ -6,23 +6,12 @@
 #
 
 import argparse
-import atexit
 import codecs
 import csv
-import glob
 import os
-import re
-import shutil
 import sys
-import time
-from itertools import groupby, islice
-from multiprocessing import Pool
 
-import matplotlib
-import numpy as np
-import simplejson
-
-from tarproclib import paths, reader, writer
+from tarproclib import paths, writer
 
 epilog = """
 The column headers contain the output filename extensions.  Each column

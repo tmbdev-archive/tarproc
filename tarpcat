@@ -7,13 +7,9 @@
 
 import argparse
 import multiprocessing as mp
-import os
 import queue as mpq
 import random
-import subprocess
 import sys
-import time
-from itertools import islice
 
 import braceexpand
 

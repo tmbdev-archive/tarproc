@@ -5,25 +5,14 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import argparse
-import atexit
-import glob
 import os
 import pickle
-import re
-import shutil
+import argparse
 import sqlite3
 import sys
 import tarfile
-import time
-from itertools import groupby, islice
-from multiprocessing import Pool
 
-import matplotlib
-import numpy as np
-import simplejson
-
-from tarproclib import paths, reader, writer
+from tarproclib import reader, writer
 
 parser = argparse.ArgumentParser("Sort the samples inside a tar file.")
 parser.add_argument("-k", "--key", default="__key__")

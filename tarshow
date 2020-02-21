@@ -7,15 +7,11 @@
 
 import argparse
 import io
-import os
-import pickle
 import re
 import select
 import sys
 import time
-from itertools import islice
 
-import matplotlib
 import numpy as np
 
 from tarproclib import reader
@@ -51,7 +47,6 @@ parser.add_argument("input", default="-", nargs="?", help="tar file")
 args = parser.parse_args()
 
 if args.field is not None:
-    import matplotlib as mpl
     import matplotlib.pylab as plt
     import PIL
     plt.ion()
