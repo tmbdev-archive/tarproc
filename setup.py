@@ -11,7 +11,7 @@ import setuptools
 if sys.version_info < (3, 6):
     sys.exit("Python versions less than 3.6 are not supported")
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 SCRIPTS = """
 tar2tsv tarcats tsv2tar tarfirst tarmix

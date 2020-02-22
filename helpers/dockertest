@@ -65,12 +65,12 @@ docker build -t tarproctest --no-cache - <<EOF
 FROM tarproctest-base
 ENV SHELL=/bin/bash
 RUN git clone https://git@github.com/tmbdev/tarproc.git /tmp/tarproc
-WORKDIR /tmp/tarproc
-RUN rm -rf tarproclib
-RUN ln -s /tmp/venv .
-RUN . venv/bin/activate; pip install --no-cache-dir pytest
-RUN . venv/bin/activate; pip install --no-cache-dir tarproc
-RUN . venv/bin/activate; python3 -m pytest
+RUN mkdir /tmp/testdir
+RUN mv /tmp/tarproc/test /tmp/testdir
+WORKDIR /tmp/testdir
+RUN pip3 install pytest
+RUN pip3 install tarproc
+RUN env PREFIX=/usr/local/bin python3 -m pytest -v -x
 EOF
 ;;
 
