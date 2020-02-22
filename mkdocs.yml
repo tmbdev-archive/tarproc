@@ -1,4 +1,4 @@
-site_name: webdataset
+site_name: tarproc
 nav:
     - Home: index.md
     - Examples: examples.md
