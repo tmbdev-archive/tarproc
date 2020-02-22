@@ -70,6 +70,7 @@ RUN mv /tmp/tarproc/test /tmp/testdir
 WORKDIR /tmp/testdir
 RUN pip3 install pytest
 RUN pip3 install tarproc
+RUN test -x /usr/local/bin/tar2tsv
 RUN env PREFIX=/usr/local/bin python3 -m pytest -v -x
 EOF
 ;;
