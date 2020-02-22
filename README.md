@@ -13,7 +13,7 @@ is faster than operating on files on file systems, and it is usually easier too.
 - tarpcat -- concatenate tar files in parallel
 - tarproc -- map command line programs over tar files
 - tarshow -- show contents of tar files
-- tarsort - sort tar files based on some key
+- tarsort -- sort tar files based on some key
 
 The following are less commonly used utilities that are specifically useful
 for deep learning:
