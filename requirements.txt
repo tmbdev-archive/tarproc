@@ -3,3 +3,4 @@ msgpack
 braceexpand
 simplejson
 pyzmq
+numpy
