@@ -2,10 +2,10 @@
 source venv/bin/activate
 set -e
 
-# echo converting notebooks
-# for nb in docs/*.ipynb; do
-#     jupyter nbconvert --to markdown $nb
-# done
+echo converting notebooks
+for nb in docs/*.ipynb; do
+    jupyter nbconvert --to markdown $nb
+done
 
 echo generating documentation
 verb() {
