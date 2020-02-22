@@ -1,0 +1,8 @@
+coverage
+keyring
+licenseheaders
+mkdocs
+nbconvert
+pytest
+setuptools
+wheel

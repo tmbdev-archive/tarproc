@@ -1,0 +1,6 @@
+site_name: webdataset
+nav:
+    - Home: index.md
+    - Module Docs: pydoc.md
+    - Command Docs: commands.md
+theme: readthedocs

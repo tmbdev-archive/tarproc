@@ -1,8 +1,8 @@
-
-## tar2tsv
+Usage information for command line programs.
+# tar2tsv (command)
 
 ```
-Extract textual information from tar training files. [-h] [-f FIELDS] [-c COUNT] [--nokey] [--noheader] [input]
+usage: Extract textual information from tar training files. [-h] [-f FIELDS] [-c COUNT] [--nokey] [--noheader] [input]
 
 positional arguments:
   input
@@ -17,11 +17,12 @@ optional arguments:
   --noheader            don't output a header
 ```
 
-## tarcats
+# tarcats (command)
 
 ```
-Concatenate tar files sequentially to standard out. [-h] [-v] [-T FILELIST] [-b] [-s SKIP] [-c COUNT] [-o OUTPUT]
-                                                           [--output-mode OUTPUT_MODE] [--shuffle SHUFFLE] [--eof] [--nodata]
+usage: Concatenate tar files sequentially to standard out. [-h] [-v] [-T FILELIST] [-b] [-s SKIP] [-c COUNT] [-o OUTPUT]
+                                                           [--output-mode OUTPUT_MODE] [--shuffle SHUFFLE] [--eof]
+                                                           [--nodata]
                                                            [input [input ...]]
 
 positional arguments:
@@ -41,10 +42,10 @@ optional arguments:
   --nodata
 ```
 
-## tarfirst
+# tarfirst (command)
 
 ```
-Dump the first matching file from a tar file. [-h] [-S SELECT] [-v] [-f FIELD] [input]
+usage: Dump the first matching file from a tar file. [-h] [-S SELECT] [-v] [-f FIELD] [input]
 
 positional arguments:
   input
@@ -58,10 +59,11 @@ optional arguments:
                         field to be selected
 ```
 
-## tarmix
+# tarmix (command)
 
 ```
-tarmix [-h] [-v] [-c COUNT] [-o OUTPUT] [--output-mode OUTPUT_MODE] [--skip SKIP] [--shuffle SHUFFLE] [--eof] yamlspec
+usage: tarmix [-h] [-v] [-c COUNT] [-o OUTPUT] [--output-mode OUTPUT_MODE] [--skip SKIP] [--shuffle SHUFFLE] [--eof]
+              yamlspec
 
 Randomly mix data sources to standard out.
 
@@ -114,10 +116,11 @@ Global parameters:
     - shuffle: shuffle the output samples before writing (use external program for very large shuffles)
 ```
 
-## tarpcat
+# tarpcat (command)
 
 ```
-tarpcat [-h] [-v] [-T FILELIST] [-b] [-c COUNT] [-s SHUFFLE] [-p WORKERS] [-o OUTPUT] [--dummy] [input [input ...]]
+usage: tarpcat [-h] [-v] [-T FILELIST] [-b] [-c COUNT] [-s SHUFFLE] [-p WORKERS] [-o OUTPUT] [--dummy]
+               [input [input ...]]
 
 Read, shuffle, and combine multiple shards in parallel.
 
@@ -136,11 +139,12 @@ optional arguments:
   --dummy
 ```
 
-## tarproc
+# tarproc (command)
 
 ```
-tarproc [-h] [-v] [-q] [-c COMMAND] [-S SCRIPT] [-w WORKING_DIR] [-b BASE] [-f FIELDS] [-F FIELDMODE] [-p PARALLEL]
-               [-e ERROR_HANDLING] [-E EXCLUDE] [-I INCLUDE] [-s SEPARATOR] [--interpreter INTERPRETER] [--count COUNT] [-o OUTPUT]
+usage: tarproc [-h] [-v] [-q] [-c COMMAND] [-S SCRIPT] [-w WORKING_DIR] [-b BASE] [-f FIELDS] [-F FIELDMODE]
+               [-p PARALLEL] [-e ERROR_HANDLING] [-E EXCLUDE] [-I INCLUDE] [-s SEPARATOR] [--interpreter INTERPRETER]
+               [--count COUNT] [-o OUTPUT]
                [input]
 
 Run commands over all samples.
@@ -188,10 +192,11 @@ Example:
     tarproc -I png -c 'convert sample.jpg sample.png' inputs.tar -o outputs.tar
 ```
 
-## tarshow
+# tarshow (command)
 
 ```
-Show data inside a tar file. [-h] [-f FIELD] [-c COUNT] [-N] [-C CMAP] [-d DELAY] [--silent] [--verbatim-keys] [--use-keyboard]
+usage: Show data inside a tar file. [-h] [-f FIELD] [-c COUNT] [-N] [-C CMAP] [-d DELAY] [--silent] [--verbatim-keys]
+                                    [--use-keyboard]
                                     [input]
 
 positional arguments:
@@ -212,11 +217,11 @@ optional arguments:
   --use-keyboard        use the keyboard rather than the mouse for input
 ```
 
-## tarsort
+# tarsort (command)
 
 ```
-Sort the samples inside a tar file. [-h] [-k KEY] [-s SORTKEY] [-S SORTTYPE] [-r REPORT] [-t TEMPFILE] [-o OUTPUT] [--update]
-                                           [--keep] [--commit COMMIT]
+usage: Sort the samples inside a tar file. [-h] [-k KEY] [-s SORTKEY] [-S SORTTYPE] [-r REPORT] [-t TEMPFILE] [-o OUTPUT]
+                                           [--update] [--keep] [--commit COMMIT]
                                            [input]
 
 positional arguments:
@@ -235,12 +240,13 @@ optional arguments:
   --commit COMMIT
 ```
 
-## tarsplit
+# tarsplit (command)
 
 ```
-Split a tar file into shards based on size or number of samples. [-h] [-n NUM_SAMPLES] [-s MAX_SIZE] [-v] [-C COMMAND]
-                                                                        [-o OUTPUT] [-O OPEN] [-z] [--start START]
-                                                                        [--maxshards MAXSHARDS] [--nodelete]
+usage: Split a tar file into shards based on size or number of samples. [-h] [-n NUM_SAMPLES] [-s MAX_SIZE] [-v]
+                                                                        [-C COMMAND] [-o OUTPUT] [-O OPEN] [-z]
+                                                                        [--start START] [--maxshards MAXSHARDS]
+                                                                        [--nodelete]
                                                                         [input]
 
 positional arguments:
@@ -260,10 +266,10 @@ optional arguments:
   --nodelete            don't delete after executing command
 ```
 
-## tsv2tar
+# tsv2tar (command)
 
 ```
-Create a tar file for a csv/tsv plan. [-h] [-f DELIM] [-k KEY] [-C DIR] [-o OUTPUT] plan
+usage: Create a tar file for a csv/tsv plan. [-h] [-f DELIM] [-k KEY] [-C DIR] [-o OUTPUT] plan
 
 positional arguments:
   plan
@@ -277,7 +283,8 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         output file (default: stdout)
 
-The column headers contain the output filename extensions. Each column contains either data or a filename. Headers starting with "@"
-denote that the column contains actual file names. If there is a __key__ column, it is used as the key, otherwise records are numbered
-sequentially.
+The column headers contain the output filename extensions. Each column contains either data or a filename. Headers
+starting with "@" denote that the column contains actual file names. If there is a __key__ column, it is used as the key,
+otherwise records are numbered sequentially.
 ```
+

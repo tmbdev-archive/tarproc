@@ -1,0 +1,10 @@
+name: TestPip
+on:
+  schedule:
+    - cron: "0 3 * * *"
+jobs:
+  testpip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: helpers/dockertest pip
