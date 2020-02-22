@@ -18,7 +18,6 @@ description = "Randomly mix data sources to standard out."
 epilog = """
 The mix is specified by a YAML file that looks something like this:
 
-```YAML
     shuffle: 1000
     sources:
       - shards: "gs://bucket1/data-{000..999}.tar"
@@ -33,7 +32,6 @@ The mix is specified by a YAML file that looks something like this:
         convert:
           - from: page.jpg
             to: png
-```
 
 The source attributes have the following meaning:
 
