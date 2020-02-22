@@ -51,7 +51,7 @@ docs: FORCE
 # remove temporary build constructs
 
 clean: FORCE
-	rm -rf venv build dist
+	rm -rf venv build dist site
 	rm -f tarproc.yaml tarproc.yml # config files that interfere with tests
 	rm -rf __pycache__ */__pycache__ *.log *.egg-info .pytest_cache .tox
 
