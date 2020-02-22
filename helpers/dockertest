@@ -67,6 +67,7 @@ ENV SHELL=/bin/bash
 RUN git clone https://git@github.com/tmbdev/tarproc.git /tmp/tarproc
 RUN mkdir /tmp/testdir
 RUN mv /tmp/tarproc/test /tmp/testdir
+RUN mv /tmp/tarproc/testdata /tmp/testdir
 WORKDIR /tmp/testdir
 RUN pip3 install pytest
 RUN pip3 install tarproc

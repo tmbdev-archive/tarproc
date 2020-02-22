@@ -32,10 +32,10 @@ dist: FORCE
 	twine upload dist/*
 
 githubtests:
-	./helpers/dockertest git
+	./helpers/dockertest git 2>&1 | tee githubtets.log
 
 pypitests:
-	./helpers/dockertest pip
+	./helpers/dockertest pip 2>&1 | tee pypitests.log
 
 # build the documentation
 
