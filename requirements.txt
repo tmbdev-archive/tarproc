@@ -4,3 +4,4 @@ braceexpand
 simplejson
 pyzmq
 numpy
+pyyaml
