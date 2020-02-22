@@ -42,7 +42,7 @@ EOF
 for command in $progs; do
     echo "# $command (command)"
     verb
-    ./$command --help
+    ./$command --help | fgrep -v '```' | sed 's/^/    /'
     endverb
 done
 ) > docs/commands.md

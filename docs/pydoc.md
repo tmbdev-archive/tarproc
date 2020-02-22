@@ -340,7 +340,7 @@ FUNCTIONS
         :param url: source URL
         :param **kw:
     
-    tariterator(fileobj, keys=<function base_plus_ext at 0x7f0d85252b90>, decoder=None, suffixes=None, errors=True, container=None)
+    tariterator(fileobj, keys=<function base_plus_ext at 0x7fb8d1307b90>, decoder=None, suffixes=None, errors=True, container=None)
         Iterate through training samples stored in a sharded tar file.
         
         :param fileobj:
