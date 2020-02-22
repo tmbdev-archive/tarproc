@@ -5,32 +5,47 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-from __future__ import print_function
-
-import glob
 import sys
-from distutils.core import setup  # , Extension, Command
+import setuptools
 
 if sys.version_info < (3, 6):
     sys.exit("Python versions less than 3.6 are not supported")
 
-scripts = """
+VERSION = "0.0.0"
+
+SCRIPTS = """
 tar2tsv tarcats tsv2tar tarfirst tarmix
 tarproc tarshow tarsort tarsplit tarpcat
 """.split()
 
-prereqs = """
-    braceexpand
-    simplejson
-    matplotlib
+PREREQS = """
+future
+msgpack
+braceexpand
+simplejson
+pyzmq
+numpy
 """.split()
 
-setup(
-    name='tarproclib',
-    version='v0.0',
+setuptools.setup(
+    name='tarproc',
+    version=VERSION,
+    description="Big data data processing for tar archives.",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="http://github.com/tmbdev/webdataset",
     author="Thomas Breuel",
-    description="Big data data processing for tar archive.",
+    author_email="tmbdev+removeme@gmail.com",
+    license="MIT",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7"
+    ],
+    keywords="POSIX tar, map reduce, object store, deep learning",
     packages=["tarproclib"],
-    scripts=scripts,
-    install_requires=prereqs,
+    python_requires=">=3.6",
+    scripts=SCRIPTS,
+    install_requires=PREREQS,
 )
