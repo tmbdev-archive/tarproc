@@ -70,12 +70,13 @@ class TarWriter1(object):
         """
         total = 0
         obj = self.encoder(obj)
-        assert "__key__" in obj, "object must contain a __key__"
+        if "__key__" not in obj:
+            raise ValueError("object must contain a __key__")
         for k, v in list(obj.items()):
             if k[0] == "_":
                 continue
-            assert isinstance(v, bytes), \
-                "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
+            if not isinstance(v, bytes):
+                raise ValueError("{} doesn't map to a bytes after encoding ({})".format(k, type(v)))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if k == "__key__":
@@ -85,8 +86,8 @@ class TarWriter1(object):
             v = obj[k]
             if isinstance(v, str):
                 v = v.encode("utf-8")
-            assert isinstance(v, (bytes)),  \
-                "converter didn't yield bytes: %s" % ((k, type(v)),)
+            if not isinstance(v, (bytes)):
+                raise ValueError("converter didn't yield bytes: %s" % ((k, type(v)),))
             now = time.time()
             if isinstance(key, bytes):
                 key = key.decode("utf-8")
@@ -98,7 +99,8 @@ class TarWriter1(object):
             ti.uname = self.user
             ti.gname = self.group
             # Since, you are writing to file, it should be of type bytes
-            assert isinstance(v, bytes), type(v)
+            if not isinstance(v, bytes):
+                raise ValueError(str(type(v)))
             stream = io.BytesIO(v)
             self.tarstream.addfile(ti, stream)
             total += ti.size

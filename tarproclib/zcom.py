@@ -55,9 +55,11 @@ def zmq_connect(socket, urls, topic=""):
     :param topic: topic to subscribe to for SUB sockets (Default value = "")
 
     """
-    assert isinstance(urls, list)
+    if not isinstance(urls, list):
+        raise ValueError(f"{urls} must be list")
     for url in urls:
-        assert len(url) > 1
+        if not isinstance(url, str) or len(url) < 2:
+            raise ValueError(f"{url}: bad url")
         if verbose:
             print("# zmq_connect", socket, url, file=sys.stderr)
         addr = urlparse(url)
@@ -129,7 +131,8 @@ class Connection(object):
         :param sample: sample to be sent
 
         """
-        assert isinstance(sample, dict)
+        if not isinstance(sample, dict):
+            raise ValueError(f"{sample}: must be dict")
         data = msgpack.packb(sample)
         self.socket.send(data)
         if verbose and self.count % 10000 == 0:
@@ -148,7 +151,8 @@ class Connection(object):
         """Receive data from the connection."""
         data = self.socket.recv()
         sample = msgpack.unpackb(data)
-        assert isinstance(sample, dict)
+        if not isinstance(sample, dict):
+            raise ValueError(f"{sample}: must be dict")
         data = {k.decode("utf-8") if isinstance(k, bytes) else k: v for k, v in sample.items()}
         if verbose and self.count % 10000 == 0:
             print("# recv", self, self.count)
@@ -212,7 +216,8 @@ class MultiWriter(object):
         :param sample: sample to be sent
 
         """
-        assert isinstance(sample, dict)
+        if not isinstance(sample, dict):
+            raise ValueError(f"{sample}: must be dict")
         data = msgpack.packb(sample)
         if self.output_mode == "round_robin":
             index = self.count % len(self.sockets)
