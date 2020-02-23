@@ -1,3 +1,7 @@
+[![Test](https://github.com/tmbdev/tarproc/workflows/Test/badge.svg)](https://github.com/tmbdev/tarproc/actions?query=workflow%3ATest)
+[![TestPip](https://github.com/tmbdev/tarproc/workflows/TestPip/badge.svg)](https://github.com/tmbdev/tarproc/actions?query=workflow%3ATestPip)
+[![DeepSource](https://static.deepsource.io/deepsource-badge-light-mini.svg)](https://deepsource.io/gh/tmbdev/tarproc/?ref=repository-badge)
+
 # The Tarproc Utilities
 
 Tarfiles are commonly used for storing large amounts of data in an efficient,
