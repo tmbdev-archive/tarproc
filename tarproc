@@ -52,9 +52,9 @@ parser.add_argument("-p", "--parallel", default=0, type=int,
 parser.add_argument("-e", "--error-handling", default="skip",
                     help="how to handle errors in scripts (ignore, skip, abort)")
 parser.add_argument("-E", "--exclude", default=None,
-                    help="exclude anything matching this from output")
+                    help="exclude anything matching this from output (regex)")
 parser.add_argument("-I", "--include", default=None,
-                    help="include only files matching this in output")
+                    help="include only files matching this in output (regex)")
 parser.add_argument("-s", "--separator", default="",
                     help="separator between key and new file bases")
 parser.add_argument("--interpreter", default="bash",
