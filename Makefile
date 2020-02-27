@@ -17,8 +17,8 @@ venv: $(VENV)/bin/activate
 
 $(VENV)/bin/activate: requirements.txt requirements.dev.txt
 	test -d $(VENV) || python3 -m venv $(VENV)
-	$(PIP) install -r requirements.dev.txt
-	$(PIP) install -r requirements.txt
+	$(PIP) install -U -r requirements.dev.txt
+	$(PIP) install -U -r requirements.txt
 	touch $(VENV)/bin/activate
 
 # push a new version to pypi; commit all changes first or this will fail

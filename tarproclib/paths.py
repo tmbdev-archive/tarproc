@@ -14,7 +14,9 @@ def filebase(fname):
 
 
 def fullext(fname):
-    return re.sub(r"(.*/)*.*?\.", "", fname)
+    s = re.sub(r"^.*/+", "", fname)
+    s = re.sub(r"^[^.]*[.]", "", s)
+    return s
 
 
 def read_binary(fname):
