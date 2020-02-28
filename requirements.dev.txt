@@ -6,3 +6,4 @@ nbconvert
 pytest
 setuptools
 wheel
+twine
