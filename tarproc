@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
 # This file is part of webloader (see TBD).
@@ -29,38 +29,79 @@ Example:
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     description="Run commands over all samples.",
-    epilog=epilog)
+    epilog=epilog,
+)
 
-parser.add_argument("-v", "--verbose", action="store_true",
-                    help="output extra information")
-parser.add_argument("-q", "--silent", action="store_true",
-                    help="extra quiet")
-parser.add_argument("-c", "--command", default=None,
-                    help="command to run for each sample (working dir = sample)")
-parser.add_argument("-S", "--script", default=None,
-                    help="script to run for each sample (working dir = sample)")
-parser.add_argument("-w", "--working_dir", default="__{pid}__",
-                    help="temporary working dir")
-parser.add_argument("-b", "--base", default="sample",
-                    help="base to substitute for __key__ (default=\"sample\")")
-parser.add_argument("-f", "--fields", default=None,
-                    help="fields to run on (default=all, space separated)")
-parser.add_argument("-F", "--fieldmode", default="ignore",
-                    help="how to handle missing fields (error or ignore)")
-parser.add_argument("-p", "--parallel", default=0, type=int,
-                    help="execute scripts in parallel")
-parser.add_argument("-e", "--error-handling", default="skip",
-                    help="how to handle errors in scripts (ignore, skip, abort)")
-parser.add_argument("-E", "--exclude", default=None,
-                    help="exclude anything matching this from output (regex)")
-parser.add_argument("-I", "--include", default=None,
-                    help="include only files matching this in output (regex)")
-parser.add_argument("-s", "--separator", default="",
-                    help="separator between key and new file bases")
-parser.add_argument("--interpreter", default="bash",
-                    help="interpreter used for script argument")
-parser.add_argument("--count", type=int, default=1000000000,
-                    help="stop after processing this many samples")
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="output extra information"
+)
+parser.add_argument("-q", "--silent", action="store_true", help="extra quiet")
+parser.add_argument(
+    "-c",
+    "--command",
+    default=None,
+    help="command to run for each sample (working dir = sample)",
+)
+parser.add_argument(
+    "-S",
+    "--script",
+    default=None,
+    help="script to run for each sample (working dir = sample)",
+)
+parser.add_argument(
+    "-w", "--working_dir", default="__{pid}__", help="temporary working dir"
+)
+parser.add_argument(
+    "-b",
+    "--base",
+    default="sample",
+    help='base to substitute for __key__ (default="sample")',
+)
+parser.add_argument(
+    "-f",
+    "--fields",
+    default=None,
+    help="fields to run on (default=all, space separated)",
+)
+parser.add_argument(
+    "-F",
+    "--fieldmode",
+    default="ignore",
+    help="how to handle missing fields (error or ignore)",
+)
+parser.add_argument(
+    "-p", "--parallel", default=0, type=int, help="execute scripts in parallel"
+)
+parser.add_argument(
+    "-e",
+    "--error-handling",
+    default="skip",
+    help="how to handle errors in scripts (ignore, skip, abort)",
+)
+parser.add_argument(
+    "-E",
+    "--exclude",
+    default=None,
+    help="exclude anything matching this from output (regex)",
+)
+parser.add_argument(
+    "-I",
+    "--include",
+    default=None,
+    help="include only files matching this in output (regex)",
+)
+parser.add_argument(
+    "-s", "--separator", default="", help="separator between key and new file bases"
+)
+parser.add_argument(
+    "--interpreter", default="bash", help="interpreter used for script argument"
+)
+parser.add_argument(
+    "--count",
+    type=int,
+    default=1000000000,
+    help="stop after processing this many samples",
+)
 parser.add_argument("-o", "--output", default=None)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
@@ -149,7 +190,7 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
             matching = [fname for fname in files if fname.startswith(base + ".")]
             extra_key = base
             if extra_key.startswith(args.base):
-                extra_key = extra_key[len(args.base):]
+                extra_key = extra_key[len(args.base) :]
             sample = {}
             if extra_key != "":
                 sample["__key__"] = old_sample["__key__"] + args.separator + extra_key
@@ -169,7 +210,13 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
 
 def proc_sample1(arg):
     i, sample = arg
-    result = proc_sample(sample, separator=args.separator, index=i, fields=fields, fieldmode=args.fieldmode)
+    result = proc_sample(
+        sample,
+        separator=args.separator,
+        index=i,
+        fields=fields,
+        fieldmode=args.fieldmode,
+    )
     assert isinstance(result, list)
     for sample in result:
         assert isinstance(sample, dict), sample
@@ -217,10 +264,12 @@ if args.parallel == 0:
         count += 1
 elif args.parallel > 0:
     from multiprocessing import Pool
+
     count = 0
     with Pool(processes=args.parallel) as pool:
-        for new_samples in pool.imap_unordered(proc_sample1,
-                                               enumerate(reader.TarIterator(args.input))):
+        for new_samples in pool.imap_unordered(
+            proc_sample1, enumerate(reader.TarIterator(args.input))
+        ):
             if count >= args.count:
                 break
             handle_result(new_samples)

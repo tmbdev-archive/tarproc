@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
 # This file is part of webloader (see TBD).
@@ -11,14 +11,16 @@ import sys
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("Extract textual information from tar training files.")
-parser.add_argument("-f", "--fields", default="",
-                    help="fields")
-parser.add_argument("-c", "--count", type=int, default=10000000000,
-                    help="maximum number of output records")
-parser.add_argument("--nokey", action="store_true",
-                    help="don't output the key field")
-parser.add_argument("--noheader", action="store_true",
-                    help="don't output a header")
+parser.add_argument("-f", "--fields", default="", help="fields")
+parser.add_argument(
+    "-c",
+    "--count",
+    type=int,
+    default=10000000000,
+    help="maximum number of output records",
+)
+parser.add_argument("--nokey", action="store_true", help="don't output the key field")
+parser.add_argument("--noheader", action="store_true", help="don't output a header")
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 

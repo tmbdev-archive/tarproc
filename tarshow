@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
 # This file is part of webloader (see TBD).
@@ -21,34 +21,45 @@ def input_with_timeout(prompt="", timeout=1e9):
     print(prompt, flush=True, end="")
     ready, _, _ = select.select([sys.stdin], [], [], timeout)
     if ready:
-        return sys.stdin.readline().rstrip('\n')  # expect stdin to be line-buffered
+        return sys.stdin.readline().rstrip("\n")  # expect stdin to be line-buffered
     else:
         return None
 
 
 parser = argparse.ArgumentParser("Show data inside a tar file.")
-parser.add_argument("-f", "--field", default=None,
-                    help="field to be viewed")
-parser.add_argument("-c", "--count", type=int, default=10000000000,
-                    help="number of records to display")
-parser.add_argument("-N", "--normalize", action="store_true",
-                    help="normalize images before display")
-parser.add_argument("-C", "--cmap", default="gray",
-                    help="color map for images")
-parser.add_argument("-d", "--delay", type=float, default=100000,
-                    help="delay between  displayed images records")
-parser.add_argument("--silent", action="store_true",
-                    help="less output")
-parser.add_argument("--verbatim-keys", action="store_true",
-                    help="compare keys verbatim (rather than case sensitive)")
-parser.add_argument("--use-keyboard", action="store_true",
-                    help="use the keyboard rather than the mouse for input")
+parser.add_argument("-f", "--field", default=None, help="field to be viewed")
+parser.add_argument(
+    "-c", "--count", type=int, default=10000000000, help="number of records to display"
+)
+parser.add_argument(
+    "-N", "--normalize", action="store_true", help="normalize images before display"
+)
+parser.add_argument("-C", "--cmap", default="gray", help="color map for images")
+parser.add_argument(
+    "-d",
+    "--delay",
+    type=float,
+    default=100000,
+    help="delay between  displayed images records",
+)
+parser.add_argument("--silent", action="store_true", help="less output")
+parser.add_argument(
+    "--verbatim-keys",
+    action="store_true",
+    help="compare keys verbatim (rather than case sensitive)",
+)
+parser.add_argument(
+    "--use-keyboard",
+    action="store_true",
+    help="use the keyboard rather than the mouse for input",
+)
 parser.add_argument("input", default="-", nargs="?", help="tar file")
 args = parser.parse_args()
 
 if args.field is not None:
     import matplotlib.pylab as plt
     import PIL
+
     plt.ion()
     fields = [re.split("[,;]", f) for f in args.field.split()]
 else:

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
 # This file is part of webloader (see TBD).
@@ -20,16 +20,15 @@ that the column contains actual file names.  If there is a __key__ column,
 it is used as the key, otherwise records are numbered sequentially.
 """
 
-parser = argparse.ArgumentParser("Create a tar file for a csv/tsv plan.",
-                                 epilog=epilog)
-parser.add_argument("-f", "--delim", default="",
-                    help="delimiter in csv/tsv file")
-parser.add_argument("-k", "--key", default="{record:09d}",
-                    help="output format for record numbers")
-parser.add_argument("-C", "--dir", default=None,
-                    help="change into directory before executing")
-parser.add_argument("-o", "--output", default="-",
-                    help="output file (default: stdout)")
+parser = argparse.ArgumentParser("Create a tar file for a csv/tsv plan.", epilog=epilog)
+parser.add_argument("-f", "--delim", default="", help="delimiter in csv/tsv file")
+parser.add_argument(
+    "-k", "--key", default="{record:09d}", help="output format for record numbers"
+)
+parser.add_argument(
+    "-C", "--dir", default=None, help="change into directory before executing"
+)
+parser.add_argument("-o", "--output", default="-", help="output file (default: stdout)")
 parser.add_argument("plan")
 args = parser.parse_args()
 

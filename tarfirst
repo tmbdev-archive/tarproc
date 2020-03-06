@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
 # This file is part of webloader (see TBD).
@@ -12,12 +12,21 @@ import sys
 from tarproclib import reader
 
 parser = argparse.ArgumentParser("Dump the first matching file from a tar file.")
-parser.add_argument("-S", "--select", default="True",
-                    help="expression that must evaluate to true before saving")
-parser.add_argument("-v", "--verbose", action="store_true",
-                    help="output more information")
-parser.add_argument("-f", "--field", default="img;image;ppm;pgm;pbm;jpeg;jpg;png",
-                    help="field to be selected")
+parser.add_argument(
+    "-S",
+    "--select",
+    default="True",
+    help="expression that must evaluate to true before saving",
+)
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="output more information"
+)
+parser.add_argument(
+    "-f",
+    "--field",
+    default="img;image;ppm;pgm;pbm;jpeg;jpg;png",
+    help="field to be selected",
+)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
