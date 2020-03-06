@@ -9,9 +9,11 @@ import argparse
 import atexit
 import glob
 import os
-import re
 import shutil
 import sys
+import re
+import subprocess
+from multiprocessing import Pool
 
 from tarproclib import paths, reader, writer
 
@@ -79,16 +81,10 @@ parser.add_argument(
     help="how to handle errors in scripts (ignore, skip, abort)",
 )
 parser.add_argument(
-    "-E",
-    "--exclude",
-    default=None,
-    help="exclude anything matching this from output (regex)",
+    "-E", "--exclude", default=None, help="exclude anything matching this from output"
 )
 parser.add_argument(
-    "-I",
-    "--include",
-    default=None,
-    help="include only files matching this in output (regex)",
+    "-I", "--include", default=None, help="include only files matching this in output"
 )
 parser.add_argument(
     "-s", "--separator", default="", help="separator between key and new file bases"
@@ -102,6 +98,11 @@ parser.add_argument(
     default=1000000000,
     help="stop after processing this many samples",
 )
+parser.add_argument(
+    "--add-log",
+    default="",
+    help="add process output to the data record with this key/extension",
+)
 parser.add_argument("-o", "--output", default=None)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
@@ -111,21 +112,19 @@ def dprint(*args, **kw):
     print(*args, file=sys.stderr, **kw)
 
 
+command = None
+
 if args.script:
     assert not args.command
-    # handle relative paths not on $PATH specially
-    path = os.path.abspath(args.script)
-    if os.path.exists(path):
-        args.command = f"{args.interpreter} '{path}'"
-    else:
-        args.command = args.script
+    command = [args.interpreter, os.path.abspath(args.script)]
 elif args.command:
     assert not args.script
+    command = [args.interpreter, "-c", args.command]
 else:
     sys.exit("most provide either --command or --script")
 
 if args.fields is not None:
-    fields = set(f for f in args.fields.split(","))
+    fields = set(f for f in args.fields.split(";"))
 else:
     fields = None
 
@@ -153,20 +152,23 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
             paths.write_binary(fname, v)
 
         # execute the command and handle errors
-        status = os.system(args.command)
-        if status != 0:
+        try:
+            log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as exn:
             if args.error_handling == "ignore":
                 if not args.silent:
-                    dprint("exit status (ignore):", status, sample.get("__key__", "?"))
+                    dprint("exit status (ignore):", exn.returncode, sample.get("__key__", "?"))
+                log_output = exn.output
                 pass
             elif args.error_handling == "skip":
                 if not args.silent:
-                    dprint("exit status (skip)", status, sample.get("__key__", "?"))
+                    dprint("exit status (skip)", exn.returncode, sample.get("__key__", "?"))
                 return []
             else:
                 if not args.silent:
-                    dprint("exit status (abort)", status, sample.get("__key__", "?"))
-                assert status == 0, status
+                    dprint("exit status (abort)", exn.returncode, sample.get("__key__", "?"))
+                    dprint(exn.output)
+                raise exn
 
         # gather up the result files
         files = sorted([fname for fname in glob.glob("*.*") if os.path.isfile(fname)])
@@ -201,6 +203,8 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
                 key = paths.fullext(fname)
                 value = paths.read_binary(fname)
                 sample[key] = value
+            if args.add_log != "":
+                sample[args.add_log] = log_output
             samples.append(sample)
     shutil.rmtree(dirname)
     for sample in samples:
@@ -263,8 +267,6 @@ if args.parallel == 0:
         handle_result(new_samples)
         count += 1
 elif args.parallel > 0:
-    from multiprocessing import Pool
-
     count = 0
     with Pool(processes=args.parallel) as pool:
         for new_samples in pool.imap_unordered(
