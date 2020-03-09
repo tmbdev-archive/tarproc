@@ -77,7 +77,7 @@ EOF
 ;;
 
 *)
-echo $1: must specify either pip or git
+echo "$1: must specify either pip or git"
 exit 1
 ;;
 

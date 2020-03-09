@@ -1,0 +1,14 @@
+*.pyc
+_*
+!__init__.py
+.*
+!.gitignore
+__pycache___
+.ipynb_checkpoints
+OLD
+data
+models
+venv
+build
+dist
+*.egg-info
