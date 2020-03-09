@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import glob
 
-ACTIVATE = ". ./venv/bin/activate"
+ACTIVATE = ". ./venv/bin/activate;"
 PACKAGE = "tarproc"
 VENV = "venv"
 PYTHON3 = f"{VENV}/bin/python3"
