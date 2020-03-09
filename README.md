@@ -59,3 +59,14 @@ for sample in islice(reader.TarIterator("gs://lpr-imagenet/imagenet_train-0000.t
     dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
     dict_keys(['__key__', 'cls', 'jpg', 'json', '__source__'])
 
+# TODO
+
+
+- cleanup
+    - organize commands under top level
+    - use `entrypoints/console_scripts` in setup.py
+- tarmix
+    - implement convert and rename
+- tarshuffle
+    - implement stream shuffling with large on-disk buffer
+- add argo examples
