@@ -11,8 +11,6 @@ import setuptools
 if sys.version_info < (3, 6):
     sys.exit("Python versions less than 3.6 are not supported")
 
-VERSION = "0.0.6"
-
 SCRIPTS = """
 tar2tsv tarcats tsv2tar tarfirst tarmix
 tarproc tarshow tarsort tarsplit tarpcat
@@ -30,7 +28,7 @@ pyyaml
 
 setuptools.setup(
     name='tarproc',
-    version=VERSION,
+    version="0.0.6",
     description="Big data data processing for tar archives.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
