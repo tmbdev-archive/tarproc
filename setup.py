@@ -28,7 +28,7 @@ pyyaml
 
 setuptools.setup(
     name='tarproc',
-    version="0.0.7",
+    version="0.0.8",
     description="Big data data processing for tar archives.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
