@@ -230,3 +230,5 @@ def checkall(c):
     assert os.path.isdir("./docs")
     for fname in required_files:
         assert os.path.exists(fname), fname
+    assert "run: make" not in open(".github/workflows/test.yml").read()
+
