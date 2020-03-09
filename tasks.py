@@ -63,7 +63,7 @@ def release(c):
     "Tag the current version as a release on Github."
     assert "working tree clean" in c.run("git status").stdout
     version = open("VERSION").read().strip()
-    c.run(f"hub release create {version}")
+    os.system(f"hub release create {version}")  # interactive
 
 
 pydoc_template = """
