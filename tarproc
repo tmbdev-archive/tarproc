@@ -9,10 +9,10 @@ import argparse
 import atexit
 import glob
 import os
-import shutil
-import sys
 import re
+import shutil
 import subprocess
+import sys
 from multiprocessing import Pool
 
 from tarproclib import paths, reader, writer
@@ -36,6 +36,10 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument(
     "-v", "--verbose", action="store_true", help="output extra information"
+)
+parser.add_argument("--debug", action="store_true", help="output debugging information")
+parser.add_argument(
+    "-O", "--command-output", default="/dev/stderr", help="where to put command output"
 )
 parser.add_argument("-q", "--silent", action="store_true", help="extra quiet")
 parser.add_argument(
@@ -104,15 +108,34 @@ parser.add_argument(
     help="add process output to the data record with this key/extension",
 )
 parser.add_argument("-o", "--output", default=None)
+parser.add_argument(
+    "--mode",
+    default="tar",
+    help="tar, lines (newline separated text), pages (^L separated text)",
+)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 
-def dprint(*args, **kw):
-    print(*args, file=sys.stderr, **kw)
+def dprint(*vars, **kw):
+    if args.debug:
+        print("DEBUG", *vars, file=sys.stderr, **kw)
 
 
 command = None
+
+
+if args.command_output != "/dev/null":
+    output_stream = open(args.command_output, "wb")
+
+
+def close_output():
+    global output_stream
+    if output_stream is not None:
+        output_stream.close()
+
+
+atexit.register(close_output)
 
 if args.script:
     assert not args.command
@@ -132,6 +155,8 @@ else:
 def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
     assert isinstance(sample, dict)
 
+    dprint("proc_sample")
+
     # if there are fields, we limit processing to those fields
     if fields is not None:
         if fieldmode == "ignore":
@@ -149,29 +174,47 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
         # write the sample out as files
         for k, v in sample.items():
             fname = args.base + "." + k if k[0] != "_" else k
+            dprint("writing", fname)
             paths.write_binary(fname, v)
 
         # execute the command and handle errors
         try:
             log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+            if output_stream is not None:
+                output_stream.write(log_output)
+                output_stream.write(b"\n")
+                output_stream.flush()
         except subprocess.CalledProcessError as exn:
             if args.error_handling == "ignore":
                 if not args.silent:
-                    dprint("exit status (ignore):", exn.returncode, sample.get("__key__", "?"))
+                    dprint(
+                        "exit status (ignore):",
+                        exn.returncode,
+                        sample.get("__key__", "?"),
+                    )
                 log_output = exn.output
                 pass
             elif args.error_handling == "skip":
                 if not args.silent:
-                    dprint("exit status (skip)", exn.returncode, sample.get("__key__", "?"))
+                    dprint(
+                        "exit status (skip)", exn.returncode, sample.get("__key__", "?")
+                    )
                 return []
             else:
                 if not args.silent:
-                    dprint("exit status (abort)", exn.returncode, sample.get("__key__", "?"))
+                    dprint(
+                        "exit status (abort)",
+                        exn.returncode,
+                        sample.get("__key__", "?"),
+                    )
                     dprint(exn.output)
                 raise exn
 
         # gather up the result files
         files = sorted([fname for fname in glob.glob("*.*") if os.path.isfile(fname)])
+
+        dprint("got", files)
+
         if args.exclude is not None:
             if args.verbose:
                 print(f"< exclude {files}")
@@ -241,6 +284,53 @@ if args.output is not None:
     atexit.register(lambda: sink.close())
 
 
+def line_iterator(fname):
+    # TODO we don't use gopen here because it doesn't handle text files
+    if fname == "-":
+        fname = "/dev/stdin"
+    with open(fname) as stream:
+        count = 0
+        for line in stream.readlines():
+            yield dict(__key__=f"{count}", txt=line)
+            count += 1
+
+
+def key_iterator(fname):
+    if fname == "-":
+        fname = "/dev/stdin"
+    with open(fname) as stream:
+        for line in stream.readlines():
+            yield dict(__key__=line.strip())
+
+
+def page_iterator(fname):
+    if fname == "-":
+        fname = "/dev/stdin"
+    with open(fname) as stream:
+        buf = ""
+        count = 0
+        for line in stream.readlines():
+            if line == "\f\n":
+                yield dict(__key__=f"{count}", txt=buf)
+                buf = ""
+            buf += line
+        if buf != "":
+            yield dict(__key__=f"{count}", txt=buf)
+
+
+def make_source(fname):
+    if args.mode == "tar":
+        return enumerate(reader.TarIterator(fname))
+    elif args.mode == "keys":
+        return enumerate(key_iterator(fname))
+    elif args.mode == "lines":
+        return enumerate(line_iterator(fname))
+    elif args.mode == "pages":
+        return enumerate(page_iterator(fname))
+    else:
+        sys.exit(f"{args.mode}: unknown mode (should be: tar, lines, or pages)")
+
+
 def handle_result(new_samples):
     assert isinstance(new_samples, list), new_samples
     global sink
@@ -259,7 +349,7 @@ def handle_result(new_samples):
 
 if args.parallel == 0:
     count = 0
-    for i, sample in enumerate(reader.TarIterator(args.input)):
+    for i, sample in make_source(args.input):
         if count >= args.count:
             break
         assert isinstance(sample, dict)
@@ -269,9 +359,7 @@ if args.parallel == 0:
 elif args.parallel > 0:
     count = 0
     with Pool(processes=args.parallel) as pool:
-        for new_samples in pool.imap_unordered(
-            proc_sample1, enumerate(reader.TarIterator(args.input))
-        ):
+        for new_samples in pool.imap_unordered(proc_sample1, make_source(args.input)):
             if count >= args.count:
                 break
             handle_result(new_samples)

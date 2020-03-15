@@ -119,6 +119,7 @@ class TarIterator1(object):
         self.start = 0
         self.end = math.inf
         self.allow_missing = allow_missing
+        # TODO change to urlparse
         if len(url.rsplit("#", 1)) > 1:
             url, fragment = url.rsplit("#", 1)
             self.start, self.end = [int(x) for x in (fragment.rsplit(",") * 2)[:2]]
