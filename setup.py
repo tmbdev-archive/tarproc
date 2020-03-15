@@ -12,8 +12,8 @@ if sys.version_info < (3, 6):
     sys.exit("Python versions less than 3.6 are not supported")
 
 SCRIPTS = """
-tar2tsv tarcats tsv2tar tarfirst tarmix
-tarproc tarshow tarsort tarsplit tarpcat
+tarcats tarfirst tarproc tarshow tarsort tarsplit tarpcat
+lines2tar tar2json
 """.split()
 
 PREREQS = """

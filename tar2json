@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import argparse
+import json
+import sys
+from itertools import islice
+
+import yaml
+
+from tarproclib import reader
+
+
+epilog = """
+"""
+
+parser = argparse.ArgumentParser(
+    "Extract parts of a tar file and output in YAML/JSON format.", epilog=epilog
+)
+parser.add_argument("-k", "--keys", default="", help="keys to extract")
+parser.add_argument(
+    "-a", "--available", action="store_true", help="list available keys and exit"
+)
+parser.add_argument(
+    "-f", "--format", default="yaml", help="output format (yaml, json, jsonlines)"
+)
+args = parser.parse_args()
+
+keys = args.keys.split()
+
+if args.available:
+    keyset = set()
+    for i, sample in islice(enumerate(reader.TarIterator("-")), 0, 100):
+        keyset = keyset.union(set(sample.keys()))
+    print(sorted(keyset))
+    sys.exit(0)
+
+
+def decode(s):
+    try:
+        return s.decode("utf-8")
+    except:
+        return s
+
+
+for i, sample in enumerate(reader.TarIterator("-")):
+    result = {k: decode(sample.get(k, None)) for k in keys}
+    if args.format == "yaml":
+        print("---")
+        print(yaml.dump(result))
+    elif args.format == "json":
+        print(json.dumps(result, indent=4))
+        print("")
+    elif args.format == "jsonlines":
+        result = json.dumps(result).strip()
+        assert "\n" not in result
+        print(result)
+    else:
+        sys.exit(f"{args.format}: unknown output format")

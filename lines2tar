@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+#
+# Copyright (c) 2017-2019 NVIDIA CORPORATION. All rights reserved.
+# This file is part of webloader (see TBD).
+# See the LICENSE file for licensing terms (BSD-style).
+#
+
+import argparse
+import sys
+
+from tarproclib import writer
+
+epilog = """
+Reads text lines containing fields separated with `separator` and
+generates tar files containing the contents of these fields as keys.
+
+```
+cat url-list | lines2tar -k url | tarproc -c 'curl $(cat sample.url) > html'
+```
+"""
+
+parser = argparse.ArgumentParser(
+    "Create a tar file from the lines of a text file.", epilog=epilog
+)
+parser.add_argument("-k", "--keys", default="txt", help="output key")
+parser.add_argument("-s", "--separator", default="\t", help="separator")
+parser.add_argument("--keyformat", default="{:09d}", help="key format for numeric keys")
+args = parser.parse_args()
+
+
+input = sys.stdin
+sink = writer.TarWriter(sys.stdout.buffer)
+keys = args.keys.split(" ")
+
+for index, item in enumerate(input.readlines()):
+    fields = item.strip("\n").split(args.separator)
+    assert len(fields) == len(keys)
+    sample = {k: v.encode("utf-8") for k, v in zip(keys, fields)}
+    print(sample, file=sys.stderr)
+    if "__key__" not in sample:
+        sample["__key__"] = args.keyformat.format(index).encode("utf-8")
+    sink.write(sample)
+
+sink.close()
+sys.stdout.buffer.close()
