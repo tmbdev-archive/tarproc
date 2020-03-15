@@ -64,8 +64,8 @@ def gopen(url, mode="rb", collect=True):
     "pipe:cmd": opens a pipe to the given command
     anything else: opens as a file
 
-    This will attempt to harvest previous processes and may give an
-    exception unrelated to the current `gopen`. Call `collect_processes`
+    If you use "pipe:", this will attempt to harvest previous processes
+    and may give an exception unrelated to the current `gopen`. Call `collect_processes`
     explicitly to avoid this.
 
     :param url: url to be opened
@@ -74,13 +74,12 @@ def gopen(url, mode="rb", collect=True):
 
     assert mode in ["r", "w", "rb", "wb"]
 
-    if collect:
-        collect_processes()
-
     if url == "-":
         return open_std(mode)
 
     if url.startswith("pipe:"):
+        if collect:
+            collect_processes()
         return open_pipe(url[5:], mode)
 
     return open(url, mode)
