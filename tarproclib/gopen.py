@@ -5,114 +5,82 @@
 # See the LICENSE file for licensing terms (BSD-style).
 #
 
-import os
-import re
+import io
 import subprocess
 import sys
-import time
 
 bufsize = 8192
 
-
-class GopenException(Exception):
-    def __init__(self, info):
-        super().__init__()
-        self.info = info
+processes = []
 
 
-class Pipe(object):
-    def __init__(self, *args, raise_errors=True, **kw):
-        self.open(*args, **kw)
-        self.raise_errors = raise_errors
-
-    def open(self, *args, **kw):
-        self.proc = subprocess.Popen(*args, bufsize=bufsize, stdout=subprocess.PIPE, **kw)
-        self.args = (args, kw)
-        self.stream = self.proc.stdout
-        if self.stream is None:
-            raise GopenException(f"{self.args}: no stream (open)")
-        self.status = None
-        return self
-
-    def read(self, *args, **kw):
-        result = self.stream.read(*args, **kw)
-        self.status = self.proc.poll()
-        if self.status is not None:
-            self.status = self.proc.wait()
-            if self.status != 0 and self.raise_errors:
-                raise GopenException(f"{self.args}: exit {self.status} (read)")
-        return result
-
-    def readLine(self, *args, **kw):
-        result = self.stream.readLine(*args, **kw)
-        self.status = self.proc.poll()
-        if self.status is not None:
-            self.status = self.proc.wait()
-            if self.status != 0 and self.raise_errors:
-                raise GopenException(f"{self.args}: exit {self.status} (readLine)")
-        return result
-
-    def close(self):
-        self.stream.close()
-        try:
-            self.status = self.proc.wait(1.0)
-        except subprocess.TimeoutExpired:
-            self.proc.terminate()
-            time.sleep(0.1)
-            self.proc.kill()
-            self.status = self.proc.wait(1.0)
-        if self.raise_errors == "all":
-            if self.status != 0 and self.raise_errors:
-                raise GopenException(f"{self.args}: exit {self.status} (close)")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
+def maybe_wait(proc):
+    status = proc.poll()
+    if status is not None:
+        status = proc.wait()
+        if status != 0:
+            return status
+        return False
+    return True
 
 
-prefix = "GOPEN_"
-
-handlers = {
-    "gs": "gsutil cat '{}'",
-    "http": "curl --fail -L -s '{}' --output -",
-    "https": "curl --fail -L -s '{}' --output -",
-    "file": "dd if='{}' bs=4M"
-}
-
-handlers.update({
-    k[len(prefix):].lower(): v
-    for k, v in os.environ.items()
-    if k.startswith(prefix)
-})
+def collect_processes():
+    global processes
+    results = [(proc, maybe_wait(proc)) for proc in processes]
+    processes = [proc for proc, status in results if status is True]
+    for proc, status in results:
+        if status not in [False, True]:
+            raise subprocess.CalledProcessError(status, proc.gopen_command)
 
 
-def gopen(url, mode="rb"):
-    """Open a stream using different handlers.
+def open_std(mode):
+    if "w" in mode:
+        stream = sys.stdout
+    else:
+        stream = sys.stdin
+    if "b" in mode:
+        stream = stream.buffer
+    return stream
+
+
+def open_pipe(cmd, mode):
+    kw = dict(stderr=sys.stderr)
+    if mode[0] == "r":
+        kw["stdout"] = subprocess.PIPE
+    else:
+        kw["stdin"] = subprocess.PIPE
+    proc = subprocess.Popen(cmd, shell=True, **kw)
+    proc.gopen_command = cmd
+    stream = proc.stdout if mode[0] == "r" else proc.stdin
+    if "b" not in mode:
+        stream = io.TextIOWrapper(stream)
+    return stream
+
+
+def gopen(url, mode="rb", collect=True):
+    """Open an I/O stream. This understands:
+
+    "-": stdin/stdout
+    "pipe:cmd": opens a pipe to the given command
+    anything else: opens as a file
+
+    This will attempt to harvest previous processes and may give an
+    exception unrelated to the current `gopen`. Call `collect_processes`
+    explicitly to avoid this.
 
     :param url: url to be opened
-    :param mode: read or write
+    :param mode: one of "r", "w", "rb", or "wb"
     """
+
+    assert mode in ["r", "w", "rb", "wb"]
+
+    if collect:
+        collect_processes()
+
     if url == "-":
-        if "w" in mode:
-            stream = sys.stdout
-        else:
-            stream = sys.stdin
-        if "b" in mode:
-            stream = stream.buffer
-        return stream
-    if url.lower().startswith("file:"):
-        url = url[5:]
-        return open(url, mode)
-    match = re.search(r"^([a-z]+):(?i)", url)
-    if not match:
-        return open(url, mode)
-    schema = match.group(1).lower()
-    handler = handlers.get(schema)
-    if handler is None:
-        raise ValueError(f"{url}: no {prefix}{schema} handler in environment")
-    cmd = handler.format(url)
-    if int(os.environ.get("GOPEN_DEBUG", "0")):
-        print("#", cmd, file=sys.stderr)
-    return Pipe(cmd, shell=True)
+        return open_std(mode)
+
+    if url.startswith("pipe:"):
+        return open_pipe(url[5:], mode)
+
+    return open(url, mode)

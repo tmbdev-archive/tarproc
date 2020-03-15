@@ -19,24 +19,14 @@ def run(script, *args, **kw):
         assert arg in result, (arg, result)
 
 
-def test_tar2tsv():
-    run(f"{PYTHON3} {PREFIX}/tar2tsv --help",
-        "Extract textual")
+def test_tar2json():
+    run(f"{PYTHON3} {PREFIX}/tar2json --help",
+        "Extract parts")
 
 
 def test_tarcats():
     run(f"{PYTHON3} {PREFIX}/tarcats --help",
         "Concatenate")
-
-
-def test_tarfirst():
-    run(f"{PYTHON3} {PREFIX}/tarfirst --help",
-        "Dump the")
-
-
-def test_tarmix():
-    run(f"{PYTHON3} {PREFIX}/tarmix --help",
-        "specified by a YAML")
 
 
 def test_tarproc():
@@ -65,6 +55,6 @@ def test_tarsplit():
         "Split a tar")
 
 
-def test_tsv2tar():
-    run(f"{PYTHON3} {PREFIX}/tsv2tar --help",
+def test_lines2tar():
+    run(f"{PYTHON3} {PREFIX}/lines2tar --help",
         "Create a tar file")

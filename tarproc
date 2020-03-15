@@ -9,7 +9,6 @@ import argparse
 import atexit
 import glob
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -49,7 +48,7 @@ parser.add_argument(
     help="command to run for each sample (working dir = sample)",
 )
 parser.add_argument(
-    "-S",
+    "-s",
     "--script",
     default=None,
     help="script to run for each sample (working dir = sample)",
@@ -64,16 +63,10 @@ parser.add_argument(
     help='base to substitute for __key__ (default="sample")',
 )
 parser.add_argument(
-    "-f",
-    "--fields",
-    default=None,
-    help="fields to run on (default=all, space separated)",
-)
-parser.add_argument(
-    "-F",
-    "--fieldmode",
-    default="ignore",
-    help="how to handle missing fields (error or ignore)",
+    "-S",
+    "--subdirs",
+    action="store_true",
+    help="collect subdirectories into new samples",
 )
 parser.add_argument(
     "-p", "--parallel", default=0, type=int, help="execute scripts in parallel"
@@ -83,15 +76,6 @@ parser.add_argument(
     "--error-handling",
     default="skip",
     help="how to handle errors in scripts (ignore, skip, abort)",
-)
-parser.add_argument(
-    "-E", "--exclude", default=None, help="exclude anything matching this from output"
-)
-parser.add_argument(
-    "-I", "--include", default=None, help="include only files matching this in output"
-)
-parser.add_argument(
-    "-s", "--separator", default="", help="separator between key and new file bases"
 )
 parser.add_argument(
     "--interpreter", default="bash", help="interpreter used for script argument"
@@ -146,29 +130,18 @@ elif args.command:
 else:
     sys.exit("most provide either --command or --script")
 
-if args.fields is not None:
-    fields = set(f for f in args.fields.split(";"))
-else:
-    fields = None
 
-
-def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
+def proc_sample(sample, index=0):
     assert isinstance(sample, dict)
 
     dprint("proc_sample")
 
-    # if there are fields, we limit processing to those fields
-    if fields is not None:
-        if fieldmode == "ignore":
-            sample = {k: v for k, v in sample.items() if k in fields or k[0] == "_"}
-        elif fieldmode == "error":
-            sample = {k: sample[k] for k in fields}
-
-    old_sample = sample
-
     # process in a subdirectory
     dirname = os.path.join(args.working_dir, "_%08d" % index)
     os.mkdir(dirname)
+
+    samples = []
+
     with paths.ChDir(dirname):
 
         # write the sample out as files
@@ -180,10 +153,6 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
         # execute the command and handle errors
         try:
             log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
-            if output_stream is not None:
-                output_stream.write(log_output)
-                output_stream.write(b"\n")
-                output_stream.flush()
         except subprocess.CalledProcessError as exn:
             if args.error_handling == "ignore":
                 if not args.silent:
@@ -210,44 +179,36 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
                     dprint(exn.output)
                 raise exn
 
+        if output_stream is not None:
+            output_stream.write(log_output)
+            output_stream.write(b"\n")
+            output_stream.flush()
+
         # gather up the result files
         files = sorted([fname for fname in glob.glob("*.*") if os.path.isfile(fname)])
 
         dprint("got", files)
 
-        if args.exclude is not None:
-            if args.verbose:
-                print(f"< exclude {files}")
-            files = [fname for fname in files if not re.search(args.exclude, fname)]
-            if args.verbose:
-                print(f"> exclude {files}")
-        if args.include is not None:
-            if args.verbose:
-                print(f"< include {files}")
-            files = [fname for fname in files if re.search(args.include, fname)]
-            if args.verbose:
-                print(f"> include {files}")
-
         # processing may have produced multiple outputs; gather them up separately
-        bases = sorted(set(map(paths.filebase, files)))
-        samples = []
-        for base in bases:
-            matching = [fname for fname in files if fname.startswith(base + ".")]
-            extra_key = base
-            if extra_key.startswith(args.base):
-                extra_key = extra_key[len(args.base) :]
+
+        if args.subdirs:
+            directories = [d for d in glob.glob("*") if os.path.isdir(d)]
+        else:
+            directories = ["."]
+
+        for directory in directories:
             sample = {}
-            if extra_key != "":
-                sample["__key__"] = old_sample["__key__"] + args.separator + extra_key
-            else:
-                sample["__key__"] = old_sample["__key__"]
-            for fname in matching:
-                assert fname.startswith(base)
-                key = paths.fullext(fname)
-                value = paths.read_binary(fname)
-                sample[key] = value
-            if args.add_log != "":
-                sample[args.add_log] = log_output
+            with paths.ChDir(directory):
+                with open("__key__") as stream:
+                    sample_key = stream.readline().strip()
+                sample["__key__"] = sample_key
+                files = sorted(glob.glob(args.base + "*"))
+                for fname in files:
+                    key = paths.fullext(fname)
+                    value = paths.read_binary(fname)
+                    sample[key] = value
+                if args.add_log != "":
+                    sample[args.add_log] = log_output
             samples.append(sample)
     shutil.rmtree(dirname)
     for sample in samples:
@@ -257,13 +218,7 @@ def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
 
 def proc_sample1(arg):
     i, sample = arg
-    result = proc_sample(
-        sample,
-        separator=args.separator,
-        index=i,
-        fields=fields,
-        fieldmode=args.fieldmode,
-    )
+    result = proc_sample(sample, index=i)
     assert isinstance(result, list)
     for sample in result:
         assert isinstance(sample, dict), sample
