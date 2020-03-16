@@ -135,22 +135,16 @@ class TarIterator1(object):
     def __iter__(self):
         count = 0
         for url in self.urls:
-            try:
-                with gopen.gopen(url, "rb") as stream:
-                    for sample in tariterator(stream, **self.kw):
-                        if count < self.start:
-                            continue
-                        if count >= self.end:
-                            break
-                        if "__source__" not in sample:
-                            sample["__source__"] = url
-                        yield sample
-                        count += 1
-            except gopen.GopenException as e:
-                if self.allow_missing:
-                    print(e.info, file=sys.stderr)
-                else:
-                    raise e
+            with gopen.gopen(url, "rb") as stream:
+                for sample in tariterator(stream, **self.kw):
+                    if count < self.start:
+                        continue
+                    if count >= self.end:
+                        break
+                    if "__source__" not in sample:
+                        sample["__source__"] = url
+                    yield sample
+                    count += 1
             if count >= self.end:
                 break
 

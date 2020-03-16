@@ -28,9 +28,17 @@ parser.add_argument(
 parser.add_argument(
     "-f", "--format", default="yaml", help="output format (yaml, json, jsonlines)"
 )
+parser.add_argument("-v", "--verbose", action="store_true")
+parser.add_argument("--nokey", action="store_true")
 args = parser.parse_args()
 
 keys = args.keys.split()
+
+if len(keys) == 0:
+    sys.exit("please specify keys to extract with the -k flag")
+
+if not args.nokey:
+    keys = ["__key__"] + keys
 
 if args.available:
     keyset = set()
@@ -48,6 +56,8 @@ def decode(s):
 
 
 for i, sample in enumerate(reader.TarIterator("-")):
+    if args.verbose:
+        print("SAMPLE:", repr(sample), file=sys.stderr)
     result = {k: decode(sample.get(k, None)) for k in keys}
     if args.format == "yaml":
         print("---")

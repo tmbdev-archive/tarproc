@@ -6,6 +6,7 @@
 #
 
 import argparse
+import json
 import sys
 
 from tarproclib import writer
@@ -24,6 +25,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("-k", "--keys", default="txt", help="output key")
 parser.add_argument("-s", "--separator", default="\t", help="separator")
+parser.add_argument("-v", "--verbose", action="store_true", help="output more info for each sample")
 parser.add_argument("--keyformat", default="{:09d}", help="key format for numeric keys")
 args = parser.parse_args()
 
@@ -36,9 +38,10 @@ for index, item in enumerate(input.readlines()):
     fields = item.strip("\n").split(args.separator)
     assert len(fields) == len(keys)
     sample = {k: v.encode("utf-8") for k, v in zip(keys, fields)}
-    print(sample, file=sys.stderr)
     if "__key__" not in sample:
         sample["__key__"] = args.keyformat.format(index).encode("utf-8")
+    if args.verbose:
+        print(sample, file=sys.stderr)
     sink.write(sample)
 
 sink.close()
