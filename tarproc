@@ -102,7 +102,7 @@ args = parser.parse_args()
 
 
 def eprint(*vars, **kw):
-    output = map(str, vars)
+    output = list(map(str, vars))
     output += [f"{k}={v}" for k, v in kw.items()]
     output = " ".join(output)
     print("#", output, file=sys.stderr)
