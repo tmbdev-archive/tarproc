@@ -196,11 +196,13 @@ def proc_sample(sample, index=0):
         else:
             directories = ["."]
 
+        sample_keys = set()
         for directory in directories:
             sample = {}
             with paths.ChDir(directory):
                 with open("__key__") as stream:
                     sample_key = stream.readline().strip()
+                assert sample_key not in sample_keys, f"{sample_key}: duplicate key"
                 sample["__key__"] = sample_key
                 files = sorted(glob.glob(args.base + "*"))
                 for fname in files:
@@ -210,6 +212,7 @@ def proc_sample(sample, index=0):
                 if args.add_log != "":
                     sample[args.add_log] = log_output
             samples.append(sample)
+            sample_keys.add(sample_key)
     shutil.rmtree(dirname)
     for sample in samples:
         assert isinstance(sample, dict), sample
