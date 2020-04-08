@@ -174,7 +174,7 @@ def proc_sample(sample, index=0):
         def notify(msg):
             if args.silent:
                 return
-            status = exn.return_code
+            status = exn.returncode
             key = sample.get("__key__", "?")
             eprint(msg, "status", status, "key", key)
 
