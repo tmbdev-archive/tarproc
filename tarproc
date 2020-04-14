@@ -153,7 +153,7 @@ def proc_sample(sample, index=0):
     # process in a subdirectory
     dirname = os.path.join(args.working_dir, "_%08d" % index)
     os.mkdir(dirname)
-    dprint("proc_sample", dirname)
+    dprint("proc_sample", os.getcwd(), dirname)
 
     samples = []
 
