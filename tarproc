@@ -97,6 +97,10 @@ parser.add_argument(
     default="tar",
     help="tar, lines (newline separated text), pages (^L separated text)",
 )
+parser.add_argument(
+    "--direct-output",
+    action="store_true"
+)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
@@ -164,7 +168,10 @@ def proc_sample(sample, index=0):
 
         try:
             dprint(command)
-            log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+            if args.direct_output:
+                subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
+            else:
+                log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exn_:
             exn = exn_
 
