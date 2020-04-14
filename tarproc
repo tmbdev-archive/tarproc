@@ -97,12 +97,16 @@ parser.add_argument(
     default="tar",
     help="tar, lines (newline separated text), pages (^L separated text)",
 )
+parser.add_argument(
+    "--direct-output",
+    action="store_true"
+)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
 
 def eprint(*vars, **kw):
-    output = map(str, vars)
+    output = list(map(str, vars))
     output += [f"{k}={v}" for k, v in kw.items()]
     output = " ".join(output)
     print("#", output, file=sys.stderr)
@@ -163,7 +167,11 @@ def proc_sample(sample, index=0):
         log_output = b"(no output)"
 
         try:
-            log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+            dprint(command)
+            if args.direct_output:
+                subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
+            else:
+                log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exn_:
             exn = exn_
 
@@ -174,7 +182,7 @@ def proc_sample(sample, index=0):
         def notify(msg):
             if args.silent:
                 return
-            status = exn.return_code
+            status = exn.returncode
             key = sample.get("__key__", "?")
             eprint(msg, "status", status, "key", key)
 
