@@ -211,6 +211,7 @@ def proc_sample(sample, index=0):
         sample_keys = set()
         for directory in directories:
             sample = {}
+            dprint("collecting", os.getcwd(), directory)
             with paths.ChDir(directory):
                 with open("sample.__key__") as stream:
                     sample_key = stream.readline().strip()
