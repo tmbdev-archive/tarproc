@@ -153,7 +153,7 @@ def proc_sample(sample, index=0):
 
         # write the sample out as files
         for k, v in sample.items():
-            fname = args.base + "." + k if k[0] != "_" else k
+            fname = args.base + "." + k
             dprint("writing", fname)
             paths.write_binary(fname, v)
 
@@ -200,7 +200,7 @@ def proc_sample(sample, index=0):
         for directory in directories:
             sample = {}
             with paths.ChDir(directory):
-                with open("__key__") as stream:
+                with open("sample.__key__") as stream:
                     sample_key = stream.readline().strip()
                 assert sample_key not in sample_keys, f"{sample_key}: duplicate key"
                 sample["__key__"] = sample_key
