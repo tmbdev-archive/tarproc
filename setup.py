@@ -32,7 +32,7 @@ setuptools.setup(
     description="Big data data processing for tar archives.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="http://github.com/tmbdev/webdataset",
+    url="http://github.com/tmbdev/tarproc",
     author="Thomas Breuel",
     author_email="tmbdev+removeme@gmail.com",
     license="MIT",

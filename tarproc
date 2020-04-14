@@ -149,11 +149,11 @@ else:
 def proc_sample(sample, index=0):
     assert isinstance(sample, dict)
 
-    dprint("proc_sample")
 
     # process in a subdirectory
     dirname = os.path.join(args.working_dir, "_%08d" % index)
     os.mkdir(dirname)
+    dprint("proc_sample", dirname)
 
     samples = []
 
