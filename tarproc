@@ -163,6 +163,7 @@ def proc_sample(sample, index=0):
         log_output = b"(no output)"
 
         try:
+            dprint(command)
             log_output = subprocess.check_output(command, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exn_:
             exn = exn_
