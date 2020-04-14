@@ -246,7 +246,8 @@ args.working_dir = args.working_dir.format(pid=str(os.getpid()))
 assert not os.path.exists(args.working_dir)
 os.mkdir(args.working_dir)
 
-atexit.register(lambda: shutil.rmtree(args.working_dir))
+if not args.keepdir:
+    atexit.register(lambda: shutil.rmtree(args.working_dir))
 
 sink = None
 
