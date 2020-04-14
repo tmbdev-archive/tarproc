@@ -101,6 +101,10 @@ parser.add_argument(
     "--direct-output",
     action="store_true"
 )
+parser.add_argument(
+    "--keepdir",
+    action="store_true"
+)
 parser.add_argument("input", default="-", nargs="?")
 args = parser.parse_args()
 
@@ -221,7 +225,8 @@ def proc_sample(sample, index=0):
                     sample[args.add_log] = log_output
             samples.append(sample)
             sample_keys.add(sample_key)
-    shutil.rmtree(dirname)
+    if not args.keepdir:
+        shutil.rmtree(dirname)
     for sample in samples:
         assert isinstance(sample, dict), sample
     return samples
