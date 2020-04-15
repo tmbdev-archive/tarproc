@@ -1,3 +1,9 @@
+# ARCHIVED
+
+The `tarproc` utilities were a set of utilities written in Python for transforming and processing tar files and respecting sample boundaries within tar files representing training datasets. They have been superceded by a ![Golang port](http://github.com/tmbdev/tarp)
+
+# Status
+
 [![Test](https://github.com/tmbdev/tarproc/workflows/Test/badge.svg)](https://github.com/tmbdev/tarproc/actions?query=workflow%3ATest)
 [![DeepSource](https://static.deepsource.io/deepsource-badge-light-mini.svg)](https://deepsource.io/gh/tmbdev/tarproc/?ref=repository-badge)
 
