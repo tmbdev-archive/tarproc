@@ -42,7 +42,7 @@ class TarWriter1(object):
         self.encoder = lambda x: x if encoder is None else encoder
         self.keep_meta = keep_meta
         self.stream = fileobj
-        self.tarstream = tarfile.open(fileobj=fileobj, mode=tarmode)
+        self.tarstream = tarfile.open(fileobj=fileobj, mode=tarmode, format=tarfile.PAX_FORMAT)
 
         self.user = user
         self.group = group
@@ -88,13 +88,12 @@ class TarWriter1(object):
                 v = v.encode("utf-8")
             if not isinstance(v, (bytes)):
                 raise ValueError("converter didn't yield bytes: %s" % ((k, type(v)),))
-            now = time.time()
             if isinstance(key, bytes):
                 key = key.decode("utf-8")
             fname = str(key + "." + k)
             ti = tarfile.TarInfo(fname)
             ti.size = len(v)
-            ti.mtime = now
+            ti.mtime = 0.0
             ti.mode = self.mode
             ti.uname = self.user
             ti.gname = self.group
